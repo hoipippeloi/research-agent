@@ -1,0 +1,12 @@
+# Custom SearXNG settings with JSON format enabled
+# This file overrides the default settings to enable JSON, CSV, and RSS formats
+
+use_default_settings: true
+
+search:
+  # Enable multiple output formats including JSON for API access
+  formats:
+    - html
+    - json
+    - csv
+    - rss
