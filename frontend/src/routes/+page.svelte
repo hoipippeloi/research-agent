@@ -10,6 +10,7 @@
     import Modal from "$lib/components/Modal.svelte";
     import { getModalFromUrl, openModal, closeModal as closeModalUrl, openMarkdownPreview, closeMarkdownPreview, type ModalType } from "$lib/modal-url";
     import MarkdownPreviewModal from "$lib/components/MarkdownPreviewModal.svelte";
+    import EmailModal from "$lib/components/EmailModal.svelte";
     import { toast } from 'svelte-sonner';
 
     interface AggregatedSearchHistory {
@@ -23,6 +24,8 @@
 
     type TabType = "searches" | "collections";
 
+    let currentUserEmail = $state<string | null>(null);
+    let showEmailModal = $state(false);
     let searchQuery = $state("");
     let isSearching = $state(false);
     let searchHistory = $state<SearchHistory[]>([]);
@@ -54,8 +57,24 @@
     );
 
     onMount(async () => {
+        const storedEmail = localStorage.getItem('user_email');
+        
+        if (!storedEmail) {
+            showEmailModal = true;
+            return;
+        }
+        
+        currentUserEmail = storedEmail;
         await Promise.all([loadSearchHistory(), loadCollections()]);
     });
+    
+    function handleEmailSubmit(email: string) {
+        localStorage.setItem('user_email', email);
+        currentUserEmail = email;
+        showEmailModal = false;
+        loadSearchHistory();
+        loadCollections();
+    }
 
     $effect(() => {
         if (aggregatedHistory.length === 0) return;
@@ -105,7 +124,7 @@
     }
 
     async function handleSaveMarkdown(markdown: string, sourceUrl: string) {
-        if (!selectedSearchForModal || !hasCollectionForQuery) {
+        if (!currentUserEmail || !selectedSearchForModal || !hasCollectionForQuery) {
             toast.error('Cannot save markdown', {
                 description: 'No collection found for this search query'
             });
@@ -131,6 +150,7 @@
                     title: selectedSearchForModal.query,
                     collectionId: collection.id,
                     url: sourceUrl,
+                    userEmail: currentUserEmail
                 }),
             });
             
@@ -154,7 +174,7 @@
     }
 
     async function fetchResults(search: AggregatedSearchHistory) {
-        if (isFetchingResults) return;
+        if (isFetchingResults || !currentUserEmail) return;
         
         isFetchingResults = true;
         isLoadingResults = true;
@@ -182,6 +202,7 @@
                                 engine === "semantic scholar"
                               ? "academic"
                               : "general",
+                    userEmail: currentUserEmail
                 }),
             });
 
@@ -212,9 +233,11 @@
     }
 
     async function loadCollections() {
+        if (!currentUserEmail) return;
+        
         try {
             isLoadingCollections = true;
-            const response = await fetch("/api/collections");
+            const response = await fetch(`/api/collections?userEmail=${encodeURIComponent(currentUserEmail)}`);
             if (response.ok) {
                 collections = await response.json();
             } else {
@@ -233,6 +256,8 @@
     }
 
     async function handleCreateCollection(search: AggregatedSearchHistory) {
+        if (!currentUserEmail) return;
+        
         try {
             isCreatingCollection = true;
             const response = await fetch("/api/collections", {
@@ -242,6 +267,7 @@
                 },
                 body: JSON.stringify({
                     topic: search.query,
+                    userEmail: currentUserEmail
                 }),
             });
 
@@ -268,10 +294,12 @@
     }
 
     async function handleDeleteCollection(id: number, e: MouseEvent) {
+        if (!currentUserEmail) return;
+        
         e.stopPropagation();
         try {
             deletingCollectionId = id;
-            const response = await fetch(`/api/collections?id=${id}`, {
+            const response = await fetch(`/api/collections?id=${id}&userEmail=${encodeURIComponent(currentUserEmail)}`, {
                 method: "DELETE",
             });
 
@@ -296,8 +324,10 @@
     }
 
     async function loadSearchHistory() {
+        if (!currentUserEmail) return;
+        
         try {
-            const response = await fetch("/api/history?limit=20");
+            const response = await fetch(`/api/history?userEmail=${encodeURIComponent(currentUserEmail)}&limit=20`);
             if (response.ok) {
                 searchHistory = await response.json();
                 await aggregateSearchHistory();
@@ -363,7 +393,7 @@
 
                     // Fetch cached results to get the unique count
                     const cacheResponse = await fetch(
-                        `/api/search?query=${encodeURIComponent(search.query)}&engine=${engineType}&cacheOnly=true`,
+                        `/api/search?query=${encodeURIComponent(search.query)}&engine=${engineType}&cacheOnly=true&userEmail=${encodeURIComponent(currentUserEmail!)}`,
                     );
 
                     if (cacheResponse.ok) {
@@ -382,7 +412,7 @@
 
     async function handleSearch(e: Event) {
         e.preventDefault();
-        if (!searchQuery.trim()) return;
+        if (!searchQuery.trim() || !currentUserEmail) return;
 
         isSearching = true;
         error = "";
@@ -396,6 +426,7 @@
                 body: JSON.stringify({
                     query: searchQuery,
                     engine: "general",
+                    userEmail: currentUserEmail
                 }),
             });
 
@@ -532,6 +563,19 @@
         content="A privacy-respecting search engine powered by SearXNG"
     />
 </svelte:head>
+
+<!-- Email Modal -->
+{#if showEmailModal}
+    <EmailModal 
+        onsubmit={handleEmailSubmit}
+        onclose={() => {
+            showEmailModal = false;
+        }}
+    />
+{/if}
+
+<!-- Main Content - Only show if user has provided email -->
+{#if currentUserEmail}
 
 <!-- Animated Background -->
 <div class="animated-bg">
@@ -1285,6 +1329,7 @@
         </div>
     </div>
 </footer>
+{/if}
 
 <style>
     .ui-scaled,

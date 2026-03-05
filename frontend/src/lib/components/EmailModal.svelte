@@ -1,14 +1,10 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import Icon from '@iconify/svelte';
+	
+	let { onsubmit, onclose }: { onsubmit?: (email: string) => void; onclose?: () => void } = $props();
 	
 	let email = $state('');
 	let error = $state('');
-	
-	const dispatch = createEventDispatcher<{
-		submit: string;
-		close: void;
-	}>();
 	
 	function validateEmail(email: string): boolean {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,18 +24,18 @@
 			return;
 		}
 		
-		dispatch('submit', email);
+		onsubmit?.(email);
 	}
 	
 	function handleClose() {
-		dispatch('close');
+		onclose?.();
 	}
 </script>
 
-<div class="modal-overlay" onclick={handleClose}>
-	<div class="modal-content" onclick={(e) => e.stopPropagation()}>
+<div class="modal-overlay" onclick={handleClose} onkeydown={(e) => e.key === 'Escape' && handleClose()} role="button" tabindex="0">
+	<div class="modal-content" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
 		<div class="modal-header">
-			<h2>
+			<h2 id="email-modal-title">
 				<Icon icon="solar:letter-linear" class="icon" />
 				Enter Your Email
 			</h2>
@@ -54,7 +50,6 @@
 					id="email"
 					bind:value={email}
 					placeholder="your@email.com"
-					autofocus
 					required
 				/>
 				{#if error}
