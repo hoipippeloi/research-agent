@@ -10,6 +10,7 @@
     import Modal from "$lib/components/Modal.svelte";
     import { getModalFromUrl, openModal, closeModal as closeModalUrl, openMarkdownPreview, closeMarkdownPreview, type ModalType } from "$lib/modal-url";
     import MarkdownPreviewModal from "$lib/components/MarkdownPreviewModal.svelte";
+    import { toast } from 'svelte-sonner';
 
     interface AggregatedSearchHistory {
         query: string;
@@ -105,13 +106,17 @@
 
     async function handleSaveMarkdown(markdown: string, sourceUrl: string) {
         if (!selectedSearchForModal || !hasCollectionForQuery) {
-            console.error("No collection found for this query");
+            toast.error('Cannot save markdown', {
+                description: 'No collection found for this search query'
+            });
             return;
         }
         
         const collection = collections.find(c => c.topic === selectedSearchForModal.query);
         if (!collection) {
-            console.error("Collection not found");
+            toast.error('Cannot save markdown', {
+                description: 'Collection not found in database'
+            });
             return;
         }
         
@@ -131,14 +136,20 @@
             
             if (response.ok) {
                 const data = await response.json();
-                console.log("Markdown saved successfully:", data);
+                toast.success('Markdown saved', {
+                    description: `Successfully saved to collection "${selectedSearchForModal.query}"`
+                });
                 handleCloseMarkdownPreview();
             } else {
                 const errorData = await response.json();
-                console.error("Failed to save markdown:", errorData.error);
+                toast.error('Failed to save markdown', {
+                    description: errorData.error || 'An error occurred while saving markdown'
+                });
             }
         } catch (error) {
-            console.error("Error saving markdown:", error);
+            toast.error('Failed to save markdown', {
+                description: 'An unexpected error occurred'
+            });
         }
     }
 
@@ -201,9 +212,16 @@
             const response = await fetch("/api/collections");
             if (response.ok) {
                 collections = await response.json();
+            } else {
+                toast.error('Failed to load collections', {
+                    description: 'Could not retrieve collections from database'
+                });
             }
         } catch (err) {
             console.error("Failed to load collections:", err);
+            toast.error('Failed to load collections', {
+                description: 'An unexpected error occurred'
+            });
         } finally {
             isLoadingCollections = false;
         }
@@ -225,14 +243,20 @@
             if (response.ok) {
                 await loadCollections();
                 closeModal();
-                // Switch to collections tab to show the new collection
                 activeTab = "collections";
+                toast.success('Collection created', {
+                    description: `Collection for "${search.query}" created successfully`
+                });
             } else {
                 const data = await response.json();
-                console.error("Failed to create collection:", data.error);
+                toast.error('Failed to create collection', {
+                    description: data.error || 'An error occurred while creating the collection'
+                });
             }
         } catch (err) {
-            console.error("Failed to create collection:", err);
+            toast.error('Failed to create collection', {
+                description: 'An unexpected error occurred'
+            });
         } finally {
             isCreatingCollection = false;
         }
@@ -248,12 +272,19 @@
 
             if (response.ok) {
                 collections = collections.filter((c) => c.id !== id);
+                toast.success('Collection deleted', {
+                    description: 'Collection has been removed successfully'
+                });
             } else {
                 const data = await response.json();
-                console.error("Failed to delete collection:", data.error);
+                toast.error('Failed to delete collection', {
+                    description: data.error || 'An error occurred while deleting the collection'
+                });
             }
         } catch (err) {
-            console.error("Failed to delete collection:", err);
+            toast.error('Failed to delete collection', {
+                description: 'An unexpected error occurred'
+            });
         } finally {
             deletingCollectionId = null;
         }
@@ -367,13 +398,25 @@
                 await loadSearchHistory();
                 loadedResultsQuery = searchQuery;
                 openModal(goto, 'search', searchQuery);
+                
+                if (results.cached) {
+                    toast.success('Search completed', {
+                        description: 'Results loaded from cache'
+                    });
+                }
             } else {
                 const data = await response.json();
                 error = data.error || "Search failed";
+                toast.error('Search failed', {
+                    description: error
+                });
             }
         } catch (err) {
             console.error("Search error:", err);
             error = "Failed to perform search. Please try again.";
+            toast.error('Search failed', {
+                description: 'An unexpected error occurred. Please try again.'
+            });
         } finally {
             isSearching = false;
         }
@@ -399,6 +442,9 @@
                 (s) => s.query === query,
             );
 
+            let successCount = 0;
+            let failCount = 0;
+
             for (const search of searchesToDelete) {
                 const response = await fetch(
                     `/api/history?id=${encodeURIComponent(search.id)}`,
@@ -407,16 +453,31 @@
                     },
                 );
 
-                if (!response.ok) {
+                if (response.ok) {
+                    successCount++;
+                } else {
+                    failCount++;
                     console.error("Failed to delete search:", search.id);
                 }
             }
 
             // Update local state
             searchHistory = searchHistory.filter((s) => s.query !== query);
-            aggregateSearchHistory();
+            await aggregateSearchHistory();
+
+            if (failCount === 0) {
+                toast.success('Search history deleted', {
+                    description: `Deleted ${successCount} search${successCount > 1 ? 'es' : ''} for "${query}"`
+                });
+            } else {
+                toast.warning('Partial deletion', {
+                    description: `${successCount} deleted, ${failCount} failed`
+                });
+            }
         } catch (err) {
-            console.error("Delete error:", err);
+            toast.error('Failed to delete search', {
+                description: 'An unexpected error occurred'
+            });
         } finally {
             deletingQuery = null;
         }
@@ -706,11 +767,28 @@
                                         </button>
                                     </div>
                                 </div>
-                                <h2
-                                    class="text-lg font-semibold tracking-tight mb-3 leading-snug line-clamp-2"
-                                >
-                                    {search.query}
-                                </h2>
+                                <div class="flex items-start gap-2 mb-3">
+                                    <h2
+                                        class="text-lg font-semibold tracking-tight leading-snug line-clamp-2 flex-1"
+                                    >
+                                        {search.query}
+                                    </h2>
+                                    {#if !collections.some(c => c.topic === search.query)}
+                                        <button
+                                            onclick={(e) => {
+                                                e.stopPropagation();
+                                                handleCreateCollection(search);
+                                            }}
+                                            class="p-1.5 hover:bg-blue-50 rounded-lg transition-colors shrink-0 group/folder"
+                                            title="Create collection"
+                                        >
+                                            <Icon
+                                                icon="mdi:folder-plus-outline"
+                                                class="text-base text-zinc-400 group-hover/folder:text-blue-600 transition-colors"
+                                            />
+                                        </button>
+                                    {/if}
+                                </div>
                                 <p
                                     class="text-zinc-500 text-sm font-light leading-relaxed"
                                 >

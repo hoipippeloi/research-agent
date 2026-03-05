@@ -70,7 +70,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Create non-root user for security
-RUN useradd -m -u 1000 -s /bin/bash llm
+RUN useradd -m -u 10001 -s /bin/bash llm
 
 # Copy llama-server binary from builder
 COPY --from=builder /usr/local/bin/llama-server /usr/local/bin/llama-server

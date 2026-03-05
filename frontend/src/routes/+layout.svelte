@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { Toaster } from 'svelte-sonner';
 
 	let { children } = $props();
 </script>
@@ -13,5 +14,7 @@
 	/>
 	<title>Search Archive</title>
 </svelte:head>
+
+<Toaster position="bottom-right" />
 
 {@render children()}
