@@ -1,5 +1,6 @@
 # Use the official SearXNG image as base
-FROM searxng/searxng:latest
+# Using specific version tag for stability
+FROM searxng/searxng:2025.3.3+b5c1c2804
 
 # Copy custom settings with JSON format enabled
 COPY settings.yml /etc/searxng/settings.yml
