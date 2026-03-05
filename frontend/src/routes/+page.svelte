@@ -490,7 +490,7 @@
 
             for (const search of searchesToDelete) {
                 const response = await fetch(
-                    `/api/history?id=${encodeURIComponent(search.id)}`,
+                    `/api/history?id=${encodeURIComponent(search.id)}&userEmail=${encodeURIComponent(currentUserEmail!)}`,
                     {
                         method: "DELETE",
                     },
