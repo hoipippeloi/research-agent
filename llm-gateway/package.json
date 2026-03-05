@@ -1,0 +1,44 @@
+{
+  "name": "@research-agent/llm-gateway",
+  "version": "1.0.0",
+  "description": "Qwen3.5-4B LLM Gateway with OpenAI-compatible API for local development and Railway deployment",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "setup:win": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
+    "dev": "bash scripts/dev.sh",
+    "dev:win": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:server": "bash scripts/start-server.sh",
+    "clean": "rm -rf dist models llama.cpp",
+    "test": "echo \"No tests yet\" && exit 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "llm",
+    "qwen",
+    "llama.cpp",
+    "openai-compatible",
+    "ai",
+    "gateway"
+  ],
+  "author": "Research Agent Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "optionalDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/research-agent.git",
+    "directory": "llm-gateway"
+  }
+}

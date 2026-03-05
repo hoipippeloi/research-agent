@@ -1,0 +1,14 @@
+# Ignore everything in the root directory
+/*
+
+# But keep the llm-gateway subdirectory
+!/llm-gateway/
+!/llm-gateway/**
+
+# Also keep .git directory (needed for Railway to detect it's a git repo)
+!/.git/
+!/.git/**
+
+# Keep any README or LICENSE files at root (optional)
+!/README.md
+!/LICENSE

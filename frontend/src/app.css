@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
 @layer base {
+	@font-face {
+		font-family: 'Aspekta';
+		font-weight: 500;
+		font-style: normal;
+		font-display: fallback;
+		src: url('/fonts/Aspekta-500.woff2') format('woff2');
+	}
+	
+	@font-face {
+		font-family: 'Aspekta';
+		font-weight: 650;
+		font-style: normal;
+		font-display: fallback;
+		src: url('/fonts/Aspekta-650.woff2') format('woff2');
+	}
+
+	:root {
+		--font-inter: 'Inter', sans-serif;
+		--font-aspekta: 'Aspekta', sans-serif;
+		--font-pt-mono: 'PT Mono', monospace;
+	}
+
 	* {
-		font-family: "Inter", sans-serif;
+		font-family: var(--font-inter);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
@@ -13,7 +35,24 @@
 	}
 
 	.font-mono {
-		font-family: "Space Mono", monospace;
+		font-family: var(--font-pt-mono);
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		font-family: var(--font-aspekta);
+		letter-spacing: -0.01em;
+	}
+
+	.text-base,
+	.text-lg,
+	.text-xl,
+	.text-2xl,
+	.text-3xl,
+	.text-4xl,
+	.text-5xl,
+	.text-6xl,
+	.text-7xl {
+		letter-spacing: -0.01em;
 	}
 }
 
@@ -150,6 +189,18 @@
 
 	.link-underline:hover::after {
 		width: 100%;
+	}
+
+	.font-inter {
+		font-family: var(--font-inter);
+	}
+
+	.font-aspekta {
+		font-family: var(--font-aspekta);
+	}
+
+	.font-pt-mono {
+		font-family: var(--font-pt-mono);
 	}
 }
 

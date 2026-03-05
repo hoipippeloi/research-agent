@@ -1,0 +1,83 @@
+# Docker Compose configuration for local testing of Qwen3.5-4B LLM Gateway
+# This allows you to test the Railway deployment configuration locally
+
+version: '3.9'
+
+services:
+  llm-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qwen3.5-4b-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      # Server configuration
+      - HOST=0.0.0.0
+      - PORT=8080
+
+      # Model configuration
+      - MODEL_PATH=/models/qwen3.5-4b-instruct-q4_K_M.gguf
+      - CONTEXT_SIZE=262000
+
+      # Performance tuning (CPU-only in Docker)
+      - GPU_LAYERS=0
+      - THREADS=4
+      - BATCH_SIZE=512
+
+      # Environment
+      - RAILWAY_ENVIRONMENT=development
+
+      # Optional: Add API key for authentication
+      # - API_KEY=your-secret-key-here
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    # Resource limits (adjust based on your system)
+    deploy:
+      resources:
+        reservations:
+          memory: 6G
+        limits:
+          memory: 8G
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Add a test service to verify the endpoint
+  test:
+    image: curlimages/curl:latest
+    container_name: llm-gateway-test
+    depends_on:
+      llm-gateway:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Testing health endpoint...' &&
+        curl -f http://llm-gateway:8080/health &&
+        echo '' &&
+        echo 'Testing chat completions endpoint...' &&
+        curl -X POST http://llm-gateway:8080/v1/chat/completions \
+          -H 'Content-Type: application/json' \
+          -d '{\"model\":\"qwen3.5-4b\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":20}' &&
+        echo ''
+      "
+    profiles:
+      - test
+
+# Optional: Define volumes for persistent storage
+# volumes:
+#   model-cache:
+#     driver: local
+
+# Optional: Define a custom network
+# networks:
+#   llm-network:
+#     driver: bridge

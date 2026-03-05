@@ -1,10 +1,15 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    import { page } from "$app/stores";
     import Icon from "@iconify/svelte";
     import type { SearchHistory } from "$lib/redis-client";
+    import type { Collection } from "$lib/db/schema";
     import BirdsFlocking from "$lib/components/BirdsFlocking.svelte";
     import { uiScale } from "$lib/stores/uiScale";
     import Modal from "$lib/components/Modal.svelte";
+    import { getModalFromUrl, openModal, closeModal as closeModalUrl, openMarkdownPreview, closeMarkdownPreview, type ModalType } from "$lib/modal-url";
+    import MarkdownPreviewModal from "$lib/components/MarkdownPreviewModal.svelte";
 
     interface AggregatedSearchHistory {
         query: string;
@@ -15,33 +20,243 @@
         searches: SearchHistory[];
     }
 
+    type TabType = "searches" | "collections";
+
     let searchQuery = $state("");
     let isSearching = $state(false);
     let searchHistory = $state<SearchHistory[]>([]);
     let aggregatedHistory = $state<AggregatedSearchHistory[]>([]);
     let error = $state("");
-    let selectedSearch = $state<AggregatedSearchHistory | null>(null);
     let searchResults = $state<any>(null);
     let isLoadingResults = $state(false);
     let isFromCache = $state(false);
     let cachedAt = $state<number | null>(null);
     let deletingQuery = $state<string | null>(null);
-    let isModalOpen = $state(false);
-    let selectedSearchForModal = $state<AggregatedSearchHistory | null>(null);
+    let activeTab = $state<TabType>("searches");
+    let collections = $state<Collection[]>([]);
+    let isLoadingCollections = $state(false);
+    let isCreatingCollection = $state(false);
+    let deletingCollectionId = $state<number | null>(null);
+    
+    let currentModal = $state<{ type: ModalType; query?: string; markdownUrl?: string }>({ type: null });
+    let loadedResultsQuery = $state<string | null>(null);
+    let isFetchingResults = $state(false);
+    let selectedSearchForModal = $derived(
+        currentModal.query && aggregatedHistory.length > 0
+            ? aggregatedHistory.find(s => s.query === currentModal.query) || null
+            : null
+    );
+    let hasCollectionForQuery = $derived(
+        selectedSearchForModal
+            ? collections.some(c => c.topic === selectedSearchForModal.query)
+            : false
+    );
 
     onMount(async () => {
-        await loadSearchHistory();
+        await Promise.all([loadSearchHistory(), loadCollections()]);
+    });
+
+    $effect(() => {
+        if (aggregatedHistory.length === 0) return;
+        
+        const modalState = getModalFromUrl($page.url);
+        currentModal = modalState;
+        
+        if (modalState.type === 'search' && modalState.query && modalState.query !== loadedResultsQuery && !isFetchingResults) {
+            const search = aggregatedHistory.find(s => s.query === modalState.query);
+            if (search) {
+                fetchResults(search);
+            }
+        }
+    });
+
+    $effect(() => {
+        if (aggregatedHistory.length === 0 || isFetchingResults) return;
+        
+        const modalState = getModalFromUrl($page.url);
+        currentModal = modalState;
+        
+        if (modalState.type === 'search' && modalState.query && modalState.query !== loadedResultsQuery) {
+            const search = aggregatedHistory.find(s => s.query === modalState.query);
+            if (search) {
+                fetchResults(search);
+            }
+        }
     });
 
     function handleOpenOptions(search: AggregatedSearchHistory, e: MouseEvent) {
         e.stopPropagation();
-        selectedSearchForModal = search;
-        isModalOpen = true;
+        openModal(goto, 'options', search.query);
     }
 
     function closeModal() {
-        isModalOpen = false;
-        selectedSearchForModal = null;
+        closeModalUrl(goto);
+    }
+
+    function handleOpenMarkdownPreview(url: string, e: MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+        openMarkdownPreview(goto, url);
+    }
+
+    function handleCloseMarkdownPreview() {
+        closeMarkdownPreview(goto);
+    }
+
+    async function handleSaveMarkdown(markdown: string, sourceUrl: string) {
+        if (!selectedSearchForModal || !hasCollectionForQuery) {
+            console.error("No collection found for this query");
+            return;
+        }
+        
+        const collection = collections.find(c => c.topic === selectedSearchForModal.query);
+        if (!collection) {
+            console.error("Collection not found");
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/saved-results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    markdown,
+                    title: selectedSearchForModal.query,
+                    collectionId: collection.id,
+                    url: sourceUrl,
+                }),
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Markdown saved successfully:", data);
+                handleCloseMarkdownPreview();
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to save markdown:", errorData.error);
+            }
+        } catch (error) {
+            console.error("Error saving markdown:", error);
+        }
+    }
+
+    async function fetchResults(search: AggregatedSearchHistory) {
+        if (isFetchingResults) return;
+        
+        isFetchingResults = true;
+        isLoadingResults = true;
+        searchResults = null;
+        isFromCache = false;
+        cachedAt = null;
+
+        try {
+            const latestSearch = search.searches.reduce((a, b) =>
+                a.timestamp > b.timestamp ? a : b,
+            );
+            const engine = latestSearch.engine.split(",")[0].trim();
+
+            const response = await fetch("/api/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    query: search.query,
+                    engine:
+                        engine === "github" || engine === "stackoverflow"
+                            ? "code"
+                            : engine === "arxiv" ||
+                                engine === "semantic scholar"
+                              ? "academic"
+                              : "general",
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                searchResults = data;
+                loadedResultsQuery = search.query;
+                isFromCache = data.cached || false;
+                cachedAt = data.cachedAt || null;
+            } else {
+                console.error("Failed to load results");
+            }
+        } catch (err) {
+            console.error("Error loading results:", err);
+        } finally {
+            isLoadingResults = false;
+            isFetchingResults = false;
+        }
+    }
+
+    async function handleViewResults(search: AggregatedSearchHistory) {
+        await openModal(goto, 'search', search.query);
+    }
+
+    async function loadCollections() {
+        try {
+            isLoadingCollections = true;
+            const response = await fetch("/api/collections");
+            if (response.ok) {
+                collections = await response.json();
+            }
+        } catch (err) {
+            console.error("Failed to load collections:", err);
+        } finally {
+            isLoadingCollections = false;
+        }
+    }
+
+    async function handleCreateCollection(search: AggregatedSearchHistory) {
+        try {
+            isCreatingCollection = true;
+            const response = await fetch("/api/collections", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    topic: search.query,
+                }),
+            });
+
+            if (response.ok) {
+                await loadCollections();
+                closeModal();
+                // Switch to collections tab to show the new collection
+                activeTab = "collections";
+            } else {
+                const data = await response.json();
+                console.error("Failed to create collection:", data.error);
+            }
+        } catch (err) {
+            console.error("Failed to create collection:", err);
+        } finally {
+            isCreatingCollection = false;
+        }
+    }
+
+    async function handleDeleteCollection(id: number, e: MouseEvent) {
+        e.stopPropagation();
+        try {
+            deletingCollectionId = id;
+            const response = await fetch(`/api/collections?id=${id}`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                collections = collections.filter((c) => c.id !== id);
+            } else {
+                const data = await response.json();
+                console.error("Failed to delete collection:", data.error);
+            }
+        } catch (err) {
+            console.error("Failed to delete collection:", err);
+        } finally {
+            deletingCollectionId = null;
+        }
     }
 
     async function loadSearchHistory() {
@@ -145,22 +360,13 @@
                 const results = await response.json();
                 console.log("Search results:", results);
 
-                // Set results and open modal
                 searchResults = results;
                 isFromCache = results.cached || false;
                 cachedAt = results.cachedAt || null;
 
-                // Create aggregated search object for modal
-                selectedSearch = {
-                    query: searchQuery,
-                    count: 1,
-                    latestTimestamp: Date.now(),
-                    engines: ["brave", "duckduckgo", "startpage"],
-                    totalResults: results.results?.length || 0,
-                    searches: [],
-                };
-
                 await loadSearchHistory();
+                loadedResultsQuery = searchQuery;
+                openModal(goto, 'search', searchQuery);
             } else {
                 const data = await response.json();
                 error = data.error || "Search failed";
@@ -216,55 +422,11 @@
         }
     }
 
-    async function handleViewResults(search: AggregatedSearchHistory) {
-        selectedSearch = search;
-        isLoadingResults = true;
-        searchResults = null;
-        isFromCache = false;
-        cachedAt = null;
-
-        try {
-            // Use the most recent search's engine
-            const latestSearch = search.searches.reduce((a, b) =>
-                a.timestamp > b.timestamp ? a : b,
-            );
-            const engine = latestSearch.engine.split(",")[0].trim();
-
-            const response = await fetch("/api/search", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    query: search.query,
-                    engine:
-                        engine === "github" || engine === "stackoverflow"
-                            ? "code"
-                            : engine === "arxiv" ||
-                                engine === "semantic scholar"
-                              ? "academic"
-                              : "general",
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                searchResults = data;
-                isFromCache = data.cached || false;
-                cachedAt = data.cachedAt || null;
-            } else {
-                console.error("Failed to load results");
-            }
-        } catch (err) {
-            console.error("Error loading results:", err);
-        } finally {
-            isLoadingResults = false;
-        }
-    }
-
     function closeResults() {
-        selectedSearch = null;
+        closeModalUrl(goto);
         searchResults = null;
+        loadedResultsQuery = null;
+        isFetchingResults = false;
         isFromCache = false;
         cachedAt = null;
     }
@@ -322,9 +484,6 @@
                 >
                     <Icon icon="mdi:magnify" class="text-white text-lg" />
                 </div>
-                <span class="font-semibold tracking-tight hidden sm:block"
-                    >search archive</span
-                >
             </a>
 
             <!-- Nav Links -->
@@ -353,21 +512,6 @@
                         <Icon icon="mdi:plus" class="text-zinc-600 text-lg" />
                     </button>
                 </div>
-
-                <a
-                    href="/"
-                    class="text-sm font-medium px-3 py-1.5 bg-zinc-900 text-white rounded-lg"
-                >
-                    Search
-                </a>
-                <a
-                    href="https://railway.com/project/cd9a0bf3-1ada-4187-968f-ccd9f971ff8e"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-sm text-zinc-500 hover:text-zinc-900 transition-colors hidden sm:block"
-                >
-                    Railway
-                </a>
             </div>
         </div>
     </nav>
@@ -445,115 +589,272 @@
         {#if isSearching}
             <div class="relative z-10 flex items-center justify-center py-8">
                 <div
-                    class="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur rounded-full border border-zinc-200/50 text-xs font-medium text-zinc-500"
+                    class="flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/50 text-base font-semibold text-zinc-700 shadow-lg"
                 >
-                    <span class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
+                    <span class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"
                     ></span>
                     Searching...
                 </div>
             </div>
         {:else if searchHistory.length > 0}
             <div class="mb-8">
+                <!-- Tabs UI -->
                 <div class="flex items-center gap-3 mb-6">
                     <div
-                        class="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur rounded-full border border-zinc-200/50 text-xs font-medium text-zinc-500"
+                        class="flex items-center gap-1 p-1 bg-white/60 backdrop-blur rounded-full border border-zinc-200/50"
                     >
-                        <span
-                            class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
-                        ></span>
-                        Recent searches
+                        <button
+                            onclick={() => (activeTab = "searches")}
+                            class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all {activeTab ===
+                            'searches'
+                                ? 'bg-white text-zinc-900 shadow-sm'
+                                : 'text-zinc-500 hover:text-zinc-700'}"
+                        >
+                            <Icon icon="mdi:history" class="text-sm" />
+                            Searches
+                            <span
+                                class="text-[10px] {activeTab === 'searches'
+                                    ? 'text-zinc-400'
+                                    : 'text-zinc-400'}"
+                            >
+                                {aggregatedHistory.length}
+                            </span>
+                        </button>
+                        <button
+                            onclick={() => (activeTab = "collections")}
+                            class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all {activeTab ===
+                            'collections'
+                                ? 'bg-white text-zinc-900 shadow-sm'
+                                : 'text-zinc-500 hover:text-zinc-700'}"
+                        >
+                            <Icon icon="mdi:folder-outline" class="text-sm" />
+                            Collections
+                            <span
+                                class="text-[10px] {activeTab === 'collections'
+                                    ? 'text-zinc-400'
+                                    : 'text-zinc-400'}"
+                            >
+                                {collections.length}
+                            </span>
+                        </button>
                     </div>
-                    <span class="text-xs text-zinc-400"
-                        >{aggregatedHistory.length} unique queries</span
-                    >
                 </div>
 
-                <!-- Search History Cards -->
-                <div
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
-                >
-                    {#each aggregatedHistory as search, i (search.query)}
-                        <div
-                            class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer hover:shadow-xl relative group"
-                            onclick={() => handleViewResults(search)}
-                            role="button"
-                            tabindex={0}
-                            onkeydown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                    handleViewResults(search);
-                                }
-                            }}
-                        >
-                            <!-- Delete Button -->
-                            <button
-                                onclick={(e) => handleDelete(search.query, e)}
-                                disabled={deletingQuery === search.query}
-                                class="absolute bottom-3 right-3 p-2 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 opacity-0 group-hover:opacity-100 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
-                                title="Delete all visits with this query"
+                {#if activeTab === "searches"}
+                    <!-- Search History Cards -->
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                    >
+                        {#each aggregatedHistory as search, i (search.query)}
+                            <div
+                                class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer hover:shadow-xl relative group"
+                                onclick={() => handleViewResults(search)}
+                                role="button"
+                                tabindex={0}
+                                onkeydown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        handleViewResults(search);
+                                    }
+                                }}
                             >
-                                {#if deletingQuery === search.query}
-                                    <Icon
-                                        icon="mdi:loading"
-                                        class="text-sm animate-spin"
-                                    />
-                                {:else}
-                                    <Icon
-                                        icon="mdi:trash-can-outline"
-                                        class="text-sm"
-                                    />
-                                {/if}
-                            </button>
-
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="font-mono text-xs text-zinc-300"
-                                    >{String(i + 1).padStart(3, "0")}</span
+                                <!-- Delete Button -->
+                                <button
+                                    onclick={(e) =>
+                                        handleDelete(search.query, e)}
+                                    disabled={deletingQuery === search.query}
+                                    class="absolute bottom-3 right-3 p-2 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 opacity-0 group-hover:opacity-100 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
+                                    title="Delete all visits with this query"
                                 >
-                                <div class="flex items-center gap-2">
-                                    {#if search.count > 1}
-                                        <span
-                                            class="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full"
-                                        >
-                                            {search.count}x
-                                        </span>
-                                    {/if}
-                                    <button
-                                        onclick={(e) =>
-                                            handleOpenOptions(search, e)}
-                                        class="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors"
-                                        title="Options"
-                                    >
+                                    {#if deletingQuery === search.query}
                                         <Icon
-                                            icon="mdi:dots-horizontal"
-                                            class="text-sm text-zinc-400"
+                                            icon="mdi:loading"
+                                            class="text-sm animate-spin"
                                         />
-                                    </button>
+                                    {:else}
+                                        <Icon
+                                            icon="mdi:trash-can-outline"
+                                            class="text-sm"
+                                        />
+                                    {/if}
+                                </button>
+
+                                <div
+                                    class="flex items-center justify-between mb-4"
+                                >
+                                    <span
+                                        class="font-mono text-xs text-zinc-300"
+                                        >{String(i + 1).padStart(3, "0")}</span
+                                    >
+                                    <div class="flex items-center gap-2">
+                                        {#if search.count > 1}
+                                            <span
+                                                class="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full"
+                                            >
+                                                {search.count}x
+                                            </span>
+                                        {/if}
+                                        <button
+                                            onclick={(e) =>
+                                                handleOpenOptions(search, e)}
+                                            class="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors"
+                                            title="Options"
+                                        >
+                                            <Icon
+                                                icon="mdi:dots-horizontal"
+                                                class="text-sm text-zinc-400"
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+                                <h2
+                                    class="text-lg font-semibold tracking-tight mb-3 leading-snug line-clamp-2"
+                                >
+                                    {search.query}
+                                </h2>
+                                <p
+                                    class="text-zinc-500 text-sm font-light leading-relaxed"
+                                >
+                                    {search.totalResults} unique results
+                                    {#if search.count > 1}
+                                        <span class="text-zinc-400"
+                                            >• {search.count} visits</span
+                                        >
+                                    {/if}
+                                </p>
+                                <div
+                                    class="flex items-center pt-4 mt-4 border-t border-zinc-100"
+                                >
+                                    <span class="text-xs text-zinc-400"
+                                        >{formatDate(
+                                            search.latestTimestamp,
+                                        )}</span
+                                    >
                                 </div>
                             </div>
-                            <h2
-                                class="text-lg font-semibold tracking-tight mb-3 leading-snug line-clamp-2"
-                            >
-                                {search.query}
-                            </h2>
-                            <p
-                                class="text-zinc-500 text-sm font-light leading-relaxed"
-                            >
-                                {search.totalResults} unique results
-                                {#if search.count > 1}
-                                    <span class="text-zinc-400"
-                                        >• {search.count} visits</span
-                                    >
-                                {/if}
-                            </p>
+                        {/each}
+                    </div>
+                {:else if activeTab === "collections"}
+                    <!-- Collections Cards -->
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                    >
+                        {#if isLoadingCollections}
                             <div
-                                class="flex items-center pt-4 mt-4 border-t border-zinc-100"
+                                class="col-span-full flex items-center justify-center py-12"
                             >
-                                <span class="text-xs text-zinc-400"
-                                    >{formatDate(search.latestTimestamp)}</span
-                                >
+                                <Icon
+                                    icon="mdi:loading"
+                                    class="text-2xl text-zinc-400 animate-spin"
+                                />
                             </div>
-                        </div>
-                    {/each}
-                </div>
+                        {:else if collections.length > 0}
+                            {#each collections as collection, i (collection.id)}
+                                <div
+                                    class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm hover:shadow-xl relative group cursor-pointer"
+                                    onclick={() => {
+                                        searchQuery = collection.topic;
+                                    }}
+                                    role="button"
+                                    tabindex={0}
+                                    onkeydown={(e) => {
+                                        if (
+                                            e.key === "Enter" ||
+                                            e.key === " "
+                                        ) {
+                                            searchQuery = collection.topic;
+                                        }
+                                    }}
+                                >
+                                    <!-- Delete Button -->
+                                    <button
+                                        onclick={(e) =>
+                                            handleDeleteCollection(
+                                                collection.id,
+                                                e,
+                                            )}
+                                        disabled={deletingCollectionId ===
+                                            collection.id}
+                                        class="absolute bottom-3 right-3 p-2 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 opacity-0 group-hover:opacity-100 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
+                                        title="Delete collection"
+                                    >
+                                        {#if deletingCollectionId === collection.id}
+                                            <Icon
+                                                icon="mdi:loading"
+                                                class="text-sm animate-spin"
+                                            />
+                                        {:else}
+                                            <Icon
+                                                icon="mdi:trash-can-outline"
+                                                class="text-sm"
+                                            />
+                                        {/if}
+                                    </button>
+
+                                    <div
+                                        class="flex items-center justify-between mb-4"
+                                    >
+                                        <span
+                                            class="font-mono text-xs text-zinc-300"
+                                            >{String(i + 1).padStart(
+                                                3,
+                                                "0",
+                                            )}</span
+                                        >
+                                        <div class="flex items-center gap-2">
+                                            <span
+                                                class="text-[10px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full"
+                                            >
+                                                Collection
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <h2
+                                        class="text-lg font-semibold tracking-tight mb-3 leading-snug line-clamp-2"
+                                    >
+                                        {collection.topic}
+                                    </h2>
+                                    <p
+                                        class="text-zinc-500 text-sm font-light leading-relaxed"
+                                    >
+                                        {collection.metadata?.totalResults || 0} unique
+                                        results
+                                        {#if (collection.searchCount ?? 0) > 1}
+                                            <span class="text-zinc-400"
+                                                >• {collection.searchCount ?? 0} saves</span
+                                            >
+                                        {/if}
+                                    </p>
+                                    <div
+                                        class="flex items-center pt-4 mt-4 border-t border-zinc-100"
+                                    >
+                                        <span class="text-xs text-zinc-400"
+                                            >{formatDate(
+                                                new Date(
+                                                    collection.updatedAt,
+                                                ).getTime(),
+                                            )}</span
+                                        >
+                                    </div>
+                                </div>
+                            {/each}
+                        {:else}
+                            <div class="col-span-full text-center py-12">
+                                <div
+                                    class="inline-flex items-center justify-center w-16 h-16 bg-white/60 backdrop-blur rounded-2xl border border-zinc-200/50 mb-4"
+                                >
+                                    <Icon
+                                        icon="mdi:folder-outline"
+                                        class="text-zinc-400 text-3xl"
+                                    />
+                                </div>
+                                <p class="text-zinc-500 text-sm">
+                                    No collections yet. Create one from a
+                                    search!
+                                </p>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
             </div>
         {:else}
             <!-- Empty State -->
@@ -572,7 +873,7 @@
 </main>
 
 <!-- Results Modal -->
-{#if selectedSearch}
+{#if currentModal.type === 'search' && selectedSearchForModal}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
     <div
         class="fixed inset-0 z-60 flex items-start justify-center pt-20 pb-8 px-4 overflow-y-auto"
@@ -597,15 +898,15 @@
             >
                 <div>
                     <h2 class="text-xl font-semibold tracking-tight">
-                        {selectedSearch.query}
+                        {selectedSearchForModal.query}
                     </h2>
                     <p class="text-sm text-zinc-500 mt-1">
-                        {selectedSearch.totalResults} total results • {selectedSearch.engines.join(
+                        {selectedSearchForModal.totalResults} total results • {selectedSearchForModal.engines.join(
                             ", ",
                         )}
-                        {#if selectedSearch.count > 1}
+                        {#if selectedSearchForModal.count > 1}
                             <span class="text-zinc-400"
-                                >• {selectedSearch.count} visits</span
+                                >• {selectedSearchForModal.count} visits</span
                             >
                         {/if}
                         {#if isFromCache && cachedAt}
@@ -679,6 +980,7 @@
                                     <div class="relative group/icon">
                                         <Icon
                                             icon="mdi:lightning-bolt"
+                                            onclick={(e) => handleOpenMarkdownPreview(result.url, e)}
                                             class="text-zinc-400 hover:text-blue-600 text-lg cursor-pointer transition-colors"
                                         />
                                         <div
@@ -687,7 +989,7 @@
                                             <div
                                                 class="bg-zinc-900 text-white text-xs px-2 py-1 rounded shadow-lg"
                                             >
-                                                Quick Action
+                                                Create Markdown
                                             </div>
                                         </div>
                                     </div>
@@ -773,10 +1075,97 @@
 
 <!-- Options Modal -->
 <Modal
-    open={isModalOpen}
+    open={currentModal.type === 'options'}
     onClose={closeModal}
     title={selectedSearchForModal?.query || ""}
-/>
+>
+    <div class="space-y-3">
+        <p class="text-sm text-zinc-500 mb-4">
+            What would you like to do with this search?
+        </p>
+        {#if !hasCollectionForQuery}
+            <button
+                onclick={() =>
+                    selectedSearchForModal &&
+                    handleCreateCollection(selectedSearchForModal)}
+                disabled={isCreatingCollection}
+                class="w-full flex items-center gap-3 p-3 rounded-xl border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+                <div
+                    class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"
+                >
+                    {#if isCreatingCollection}
+                        <Icon
+                            icon="mdi:loading"
+                            class="text-blue-600 text-lg animate-spin"
+                        />
+                    {:else}
+                        <Icon
+                            icon="mdi:folder-plus-outline"
+                            class="text-blue-600 text-lg"
+                        />
+                    {/if}
+                </div>
+                <div class="text-left">
+                    <div class="font-medium text-sm">Create Collection</div>
+                    <div class="text-xs text-zinc-400">
+                        Save this topic for future reference
+                    </div>
+                </div>
+            </button>
+        {/if}
+        <button
+            onclick={() => {
+                if (selectedSearchForModal) {
+                    closeModal();
+                    handleViewResults(selectedSearchForModal);
+                }
+            }}
+            class="w-full flex items-center gap-3 p-3 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+        >
+            <div
+                class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center"
+            >
+                <Icon icon="mdi:eye-outline" class="text-zinc-600 text-lg" />
+            </div>
+            <div class="text-left">
+                <div class="font-medium text-sm">View Results</div>
+                <div class="text-xs text-zinc-400">See all cached results</div>
+            </div>
+        </button>
+        <button
+            onclick={() => {
+                if (selectedSearchForModal) {
+                    searchQuery = selectedSearchForModal.query;
+                    closeModal();
+                }
+            }}
+            class="w-full flex items-center gap-3 p-3 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+        >
+            <div
+                class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center"
+            >
+                <Icon icon="mdi:refresh" class="text-zinc-600 text-lg" />
+            </div>
+            <div class="text-left">
+                <div class="font-medium text-sm">Search Again</div>
+                <div class="text-xs text-zinc-400">
+                    Run this search query again
+                </div>
+            </div>
+        </button>
+    </div>
+</Modal>
+
+<!-- Markdown Preview Modal -->
+{#if currentModal.markdownUrl}
+    <MarkdownPreviewModal
+        open={!!currentModal.markdownUrl}
+        onClose={handleCloseMarkdownPreview}
+        url={currentModal.markdownUrl}
+        onSave={hasCollectionForQuery ? handleSaveMarkdown : undefined}
+    />
+{/if}
 
 <!-- Floating Footer -->
 <footer

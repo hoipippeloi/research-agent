@@ -1,0 +1,3 @@
+ALTER TABLE "saved_results" ADD COLUMN "collection_id" integer;--> statement-breakpoint
+ALTER TABLE "saved_results" ADD CONSTRAINT "saved_results_collection_id_collections_id_fk" FOREIGN KEY ("collection_id") REFERENCES "public"."collections"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "saved_results_collection_idx" ON "saved_results" USING btree ("collection_id");
