@@ -17,28 +17,21 @@
                 "attributes": {
                   "color": "#18181b",
                   "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-                  "font-size": "16px",
-                  "fontSize": "14px",
-                  "line-height": "1.6",
-                  "lineHeight": "1.5"
+                  "font-size": "14px",
+                  "line-height": "1.6"
                 }
               },
               {
                 "id": "",
                 "type": "mj-button",
                 "attributes": {
-                  "backgroundColor": "#18181b",
-                  "border-radius": "3px",
-                  "borderRadius": "3px",
+                  "background-color": "#18181b",
+                  "border-radius": "12px",
                   "color": "#ffffff",
                   "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
                   "font-weight": "600",
-                  "fontSize": "14px",
-                  "fontWeight": "600",
-                  "paddingBottom": "10px",
-                  "paddingLeft": "25px",
-                  "paddingRight": "25px",
-                  "paddingTop": "10px"
+                  "font-size": "13px",
+                  "inner-padding": "10px 20px"
                 }
               }
             ]
@@ -62,44 +55,18 @@
                     "type": "mj-text",
                     "attributes": {
                       "align": "center",
-                      "color": "#ffffff",
-                      "fontSize": "14px",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "0"
+                      "padding": "20px 0"
                     },
-                    "content": "<div style=\"display: inline-block; width: 48px; height: 48px; background: #18181b; border-radius: 12px; line-height: 48px; font-size: 24px;\">✦</div>"
-                  },
-                  {
-                    "id": "",
-                    "type": "mj-text",
-                    "attributes": {
-                      "align": "center",
-                      "color": "#18181b",
-                      "font-size": "20px",
-                      "font-weight": "600",
-                      "fontSize": "20px",
-                      "letter-spacing": "-0.01em",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "0",
-                      "padding-top": "12px"
-                    },
-                    "content": "archive"
+                    "content": "<div style=\"display: inline-block; padding: 12px 24px; background: #ffffff; border-radius: 16px; border: 1px solid #e4e4e7; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"width: auto;\"><tr><td style=\"padding-right: 12px; vertical-align: middle;\"><div style=\"width: 36px; height: 36px; background: #18181b; border-radius: 12px; display: inline-block; text-align: center; line-height: 36px;\"><span style=\"color: #ffffff; font-size: 18px;\">✦</span></div></td><td style=\"vertical-align: middle;\"><span style=\"font-size: 16px; font-weight: 600; color: #18181b; letter-spacing: -0.01em; font-family: Inter, -apple-system, sans-serif;\">archive</span></td></tr></table></div>"
                   }
                 ],
                 "attributes": {
-                  "paddingBottom": "0px",
-                  "paddingLeft": "0px",
-                  "paddingRight": "0px",
-                  "paddingTop": "0px"
+                  "padding": "0"
                 }
               }
             ],
             "attributes": {
-              "padding": "40px 20px 20px 20px",
-              "paddingBottom": "20px",
-              "paddingLeft": "0px",
-              "paddingRight": "0px",
-              "paddingTop": "20px"
+              "padding": "30px 20px 20px 20px"
             }
           },
           {
@@ -115,13 +82,21 @@
                     "type": "mj-text",
                     "attributes": {
                       "align": "center",
+                      "padding": "0 0 8px 0"
+                    },
+                    "content": "<span style=\"font-family: 'Space Mono', monospace; font-size: 12px; color: #a1a1aa;\">001</span>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
                       "color": "#18181b",
                       "font-size": "24px",
-                      "font-weight": "700",
-                      "fontSize": "24px",
-                      "letter-spacing": "-0.01em",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "8px"
+                      "font-weight": "600",
+                      "letter-spacing": "-0.025em",
+                      "line-height": "1.25",
+                      "padding": "0 0 4px 0"
                     },
                     "content": "New User Signup"
                   },
@@ -132,64 +107,56 @@
                       "align": "center",
                       "color": "#71717a",
                       "font-size": "14px",
-                      "fontSize": "14px",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "24px",
-                      "padding-top": "0"
+                      "font-weight": "300",
+                      "line-height": "1.6",
+                      "padding": "0 0 30px 0"
                     },
-                    "content": "Archive"
+                    "content": "A new user has joined Archive"
                   },
                   {
                     "id": "",
                     "type": "mj-text",
                     "attributes": {
-                      "color": "#71717a",
-                      "fontSize": "14px",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "16px"
+                      "padding": "0 0 24px 0"
                     },
-                    "content": "A new user has signed up for Archive:"
-                  },
-                  {
-                    "id": "",
-                    "type": "mj-text",
-                    "attributes": {
-                      "color": "#18181b",
-                      "fontSize": "14px",
-                      "lineHeight": "1.5",
-                      "padding-bottom": "24px"
-                    },
-                    "content": "<div style=\"background: linear-gradient(135deg, #fafafa 0%, #f4f1f0 25%, #f0f4f8 50%, #fdf4f4 75%, #fafafa 100%); border-radius: 12px; padding: 20px;\"><p style=\"margin: 0 0 8px 0; font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em;\">Email Address</p><p style=\"margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #18181b; font-family: 'Space Mono', 'Courier New', monospace;\">{{new_user_email}}</p><p style=\"margin: 0; font-size: 13px; color: #71717a;\">📅 <span style=\"font-family: 'Space Mono', 'Courier New', monospace;\">{{timestamp}}</span></p></div>"
+                    "content": "<div style=\"background: linear-gradient(135deg, #fafafa 0%, #f4f1f0 25%, #f0f4f8 50%, #fdf4f4 75%, #fafafa 100%); border-radius: 16px; padding: 20px; border: 1px solid #e4e4e7;\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr><td style=\"padding-bottom: 12px;\"><span style=\"font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.1em; font-family: Inter, -apple-system, sans-serif;\">Email Address</span></td></tr><tr><td style=\"padding-bottom: 16px;\"><span style=\"font-size: 16px; font-weight: 600; color: #18181b; font-family: 'Space Mono', 'Courier New', monospace;\">{{new_user_email}}</span></td></tr><tr><td style=\"padding-top: 16px; border-top: 1px solid #e4e4e7;\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr><td><span style=\"font-size: 12px; color: #71717a;\">📅 {{timestamp}}</span></td><td align=\"right\"><span style=\"font-size: 12px; color: #a1a1aa;\">{{user_agent}}</span></td></tr></table></td></tr></table></div>"
                   },
                   {
                     "id": "",
                     "type": "mj-button",
                     "attributes": {
                       "background-color": "#18181b",
-                      "backgroundColor": "#18181b",
-                      "borderRadius": "3px",
+                      "border-radius": "12px",
                       "color": "#ffffff",
-                      "font-size": "14px",
-                      "fontSize": "14px",
+                      "font-size": "13px",
                       "font-weight": "600",
-                      "fontWeight": "600",
                       "href": "mailto:{{new_user_email}}",
-                      "inner-padding": "10px 25px",
-                      "padding": "0"
+                      "inner-padding": "10px 20px",
+                      "padding": "10px 0 0 0"
                     },
                     "content": "Contact User"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "padding": "20px 0 0 0"
+                    },
+                    "content": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"width: 100%;\"><tr><td style=\"padding-top: 20px; border-top: 1px solid #f4f4f5;\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"width: 100%;\"><tr><td><span style=\"font-size: 12px; color: #a1a1aa;\">User ID: <span style=\"font-family: 'Space Mono', monospace; color: #71717a;\">{{user_id}}</span></span></td><td align=\"right\"><span style=\"font-size: 12px; color: #a1a1aa;\">IP: <span style=\"font-family: 'Space Mono', monospace; color: #71717a;\">{{ip_address}}</span></span></td></tr></table></td></tr></table>"
                   }
                 ],
                 "attributes": {
                   "background-color": "#ffffff",
-                  "border": "1px solid rgba(228, 228, 231, 0.5)",
+                  "border": "1px solid #e4e4e7",
                   "border-radius": "16px",
-                  "padding": "32px"
+                  "padding": "32px",
+                  "box-shadow": "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
                 }
               }
             ],
             "attributes": {
-              "padding": "0 20px 40px 20px"
+              "padding": "0 20px 20px 20px"
             }
           },
           {
@@ -205,13 +172,9 @@
                     "type": "mj-text",
                     "attributes": {
                       "align": "center",
-                      "color": "#a1a1aa",
-                      "font-size": "12px",
-                      "fontSize": "12px",
-                      "lineHeight": "1.5",
-                      "padding-top": "20px"
+                      "padding": "0"
                     },
-                    "content": "Built with ❤️ by <a href=\"https://hoi-research.up.railway.app\" style=\"color: #18181b; text-decoration: none; font-weight: 500;\">Archive</a> • Privacy-First Search"
+                    "content": "<div style=\"display: inline-block; padding: 12px 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e4e4e7; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"padding: 0 8px;\"><a href=\"https://hoi-research.up.railway.app\" style=\"color: #a1a1aa; text-decoration: none;\"><span style=\"font-size: 16px;\">🐦</span></a></td><td style=\"padding: 0 8px;\"><a href=\"https://hoi-research.up.railway.app\" style=\"color: #a1a1aa; text-decoration: none;\"><span style=\"font-size: 16px;\">⚡</span></a></td><td style=\"padding: 0 8px;\"><a href=\"mailto:support@archive.app\" style=\"color: #a1a1aa; text-decoration: none;\"><span style=\"font-size: 16px;\">✉️</span></a></td></tr></table></div>"
                   },
                   {
                     "id": "",
@@ -220,18 +183,13 @@
                       "align": "center",
                       "color": "#a1a1aa",
                       "font-size": "11px",
-                      "fontSize": "11px",
-                      "lineHeight": "1.5",
-                      "padding-top": "10px"
+                      "padding": "12px 0 0 0"
                     },
-                    "content": "© 2024 Archive. All rights reserved."
+                    "content": "© 2024 Archive • Privacy-First Search"
                   }
                 ],
                 "attributes": {
-                  "paddingBottom": "0px",
-                  "paddingLeft": "0px",
-                  "paddingRight": "0px",
-                  "paddingTop": "0px"
+                  "padding": "0"
                 }
               }
             ],
@@ -248,7 +206,10 @@
   },
   "testData": {
     "new_user_email": "john.doe@example.com",
-    "timestamp": "January 15, 2025 at 10:30 AM"
+    "timestamp": "January 15, 2025 at 10:30 AM",
+    "user_agent": "Chrome 120 / macOS",
+    "user_id": "usr_abc123xyz",
+    "ip_address": "192.168.1.1"
   },
   "exportedAt": "2025-01-15T10:30:00.000Z",
   "version": "1.0"

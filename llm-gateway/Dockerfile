@@ -1,6 +1,6 @@
-# Qwen3.5-4B LLM Gateway Dockerfile for Railway Deployment
+# Qwen3.5-0.8B LLM Gateway Dockerfile for Railway Deployment
 # CPU-only inference server with OpenAI-compatible API
-# Uses llama.cpp's built-in Hugging Face download feature
+# Uses local model file for faster startup
 
 # ============================================
 # Stage 1: Build llama.cpp
@@ -41,7 +41,7 @@ FROM ubuntu:24.04
 
 # Labels for identification
 LABEL maintainer="Research Agent Team"
-LABEL description="Qwen3.5-4B LLM Gateway with OpenAI-compatible API"
+LABEL description="Qwen3.5-0.8B LLM Gateway with OpenAI-compatible API"
 LABEL version="2.0.0"
 
 # Avoid interactive prompts
@@ -66,6 +66,9 @@ COPY --from=builder /usr/local/bin/llama-cli /usr/local/bin/llama-cli
 # Create models directory with proper permissions
 RUN mkdir -p /models && chown -R llm:llm /models
 
+# Copy the local model file into the image
+COPY --chown=llm:llm Qwen3.5-0.8B-Q4_K_M.gguf /models/Qwen3.5-0.8B-Q4_K_M.gguf
+
 # Environment variables with Railway-compatible defaults
 ENV HOST=0.0.0.0 \
     PORT=8080
@@ -76,8 +79,8 @@ EXPOSE 8080
 # Switch to non-root user
 USER llm
 
-# Health check with extended start period for model download
-# First startup will take longer as it downloads the model from Hugging Face
+# Health check with start period for model loading
+# Model is already in the image, so startup is faster
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
@@ -85,10 +88,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
 WORKDIR /app
 
 # Start the llama.cpp server
-# Uses -hf flag to automatically download model from Hugging Face on first run
-# Model will be cached locally for subsequent starts
+# Uses local model file copied into the image
 # Configuration optimized for Railway's CPU-only environment:
-# - -hf: Download model directly from Hugging Face (unsloth optimized Dynamic 2.0)
+# - -m: Path to local model file
 # - --host 0.0.0.0: Bind to all interfaces (required for Railway)
 # - --port 8080: Use Railway's default port
 # - --ctx-size 262000: Full 262K context window for Qwen3.5
@@ -98,4 +100,4 @@ WORKDIR /app
 # - --alias: Model identifier for API responses
 # - Sampling parameters from unsloth recommendations
 
-CMD ["sh", "-c", "llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --n-gpu-layers 0 --threads 4 --batch-size 512 --alias unsloth/Qwen3.5-4B-GGUF --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --metrics"]
+CMD ["sh", "-c", "llama-server -m /models/Qwen3.5-0.8B-Q4_K_M.gguf --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --n-gpu-layers 0 --threads 4 --batch-size 512 --alias Qwen3.5-0.8B-Q4_K_M --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --metrics"]

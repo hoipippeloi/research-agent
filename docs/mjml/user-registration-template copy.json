@@ -1,0 +1,255 @@
+{
+  "emailTree": {
+    "id": "",
+    "type": "mjml",
+    "children": [
+      {
+        "id": "",
+        "type": "mj-head",
+        "children": [
+          {
+            "id": "",
+            "type": "mj-attributes",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-text",
+                "attributes": {
+                  "color": "#18181b",
+                  "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                  "font-size": "16px",
+                  "fontSize": "14px",
+                  "line-height": "1.6",
+                  "lineHeight": "1.5"
+                }
+              },
+              {
+                "id": "",
+                "type": "mj-button",
+                "attributes": {
+                  "backgroundColor": "#18181b",
+                  "border-radius": "3px",
+                  "borderRadius": "3px",
+                  "color": "#ffffff",
+                  "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                  "font-weight": "600",
+                  "fontSize": "14px",
+                  "fontWeight": "600",
+                  "paddingBottom": "10px",
+                  "paddingLeft": "25px",
+                  "paddingRight": "25px",
+                  "paddingTop": "10px"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "",
+        "type": "mj-body",
+        "children": [
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#ffffff",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "0"
+                    },
+                    "content": "<div style=\"display: inline-block; width: 48px; height: 48px; background: #18181b; border-radius: 12px; line-height: 48px; font-size: 24px;\">✦</div>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#18181b",
+                      "font-size": "20px",
+                      "font-weight": "600",
+                      "fontSize": "20px",
+                      "letter-spacing": "-0.01em",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "0",
+                      "padding-top": "12px"
+                    },
+                    "content": "archive"
+                  }
+                ],
+                "attributes": {
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "paddingRight": "0px",
+                  "paddingTop": "0px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "40px 20px 20px 20px",
+              "paddingBottom": "20px",
+              "paddingLeft": "0px",
+              "paddingRight": "0px",
+              "paddingTop": "20px"
+            }
+          },
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#18181b",
+                      "font-size": "24px",
+                      "font-weight": "700",
+                      "fontSize": "24px",
+                      "letter-spacing": "-0.01em",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "8px"
+                    },
+                    "content": "New User Signup"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#71717a",
+                      "font-size": "14px",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "24px",
+                      "padding-top": "0"
+                    },
+                    "content": "Archive"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#71717a",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "16px"
+                    },
+                    "content": "A new user has signed up for Archive:"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#18181b",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "24px"
+                    },
+                    "content": "<div style=\"background: linear-gradient(135deg, #fafafa 0%, #f4f1f0 25%, #f0f4f8 50%, #fdf4f4 75%, #fafafa 100%); border-radius: 12px; padding: 20px;\"><p style=\"margin: 0 0 8px 0; font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em;\">Email Address</p><p style=\"margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #18181b; font-family: 'Space Mono', 'Courier New', monospace;\">{{new_user_email}}</p><p style=\"margin: 0; font-size: 13px; color: #71717a;\">📅 <span style=\"font-family: 'Space Mono', 'Courier New', monospace;\">{{timestamp}}</span></p></div>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-button",
+                    "attributes": {
+                      "background-color": "#18181b",
+                      "backgroundColor": "#18181b",
+                      "borderRadius": "3px",
+                      "color": "#ffffff",
+                      "font-size": "14px",
+                      "fontSize": "14px",
+                      "font-weight": "600",
+                      "fontWeight": "600",
+                      "href": "mailto:{{new_user_email}}",
+                      "inner-padding": "10px 25px",
+                      "padding": "0"
+                    },
+                    "content": "Contact User"
+                  }
+                ],
+                "attributes": {
+                  "background-color": "#ffffff",
+                  "border": "1px solid rgba(228, 228, 231, 0.5)",
+                  "border-radius": "16px",
+                  "padding": "32px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "0 20px 40px 20px"
+            }
+          },
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#a1a1aa",
+                      "font-size": "12px",
+                      "fontSize": "12px",
+                      "lineHeight": "1.5",
+                      "padding-top": "20px"
+                    },
+                    "content": "Built with ❤️ by <a href=\"https://hoi-research.up.railway.app\" style=\"color: #18181b; text-decoration: none; font-weight: 500;\">Archive</a> • Privacy-First Search"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#a1a1aa",
+                      "font-size": "11px",
+                      "fontSize": "11px",
+                      "lineHeight": "1.5",
+                      "padding-top": "10px"
+                    },
+                    "content": "© 2024 Archive. All rights reserved."
+                  }
+                ],
+                "attributes": {
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "paddingRight": "0px",
+                  "paddingTop": "0px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "0 20px 40px 20px"
+            }
+          }
+        ],
+        "attributes": {
+          "background-color": "#fafafa"
+        }
+      }
+    ]
+  },
+  "testData": {
+    "new_user_email": "john.doe@example.com",
+    "timestamp": "January 15, 2025 at 10:30 AM"
+  },
+  "exportedAt": "2025-01-15T10:30:00.000Z",
+  "version": "1.0"
+}
