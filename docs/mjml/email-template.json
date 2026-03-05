@@ -1,0 +1,286 @@
+{
+  "emailTree": {
+    "id": "",
+    "type": "mjml",
+    "children": [
+      {
+        "id": "",
+        "type": "mj-head",
+        "children": [
+          {
+            "id": "",
+            "type": "mj-attributes",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-text",
+                "attributes": {
+                  "color": "#18181b",
+                  "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                  "font-size": "16px",
+                  "fontSize": "14px",
+                  "line-height": "1.6",
+                  "lineHeight": "1.5"
+                }
+              },
+              {
+                "id": "",
+                "type": "mj-button",
+                "attributes": {
+                  "backgroundColor": "#414141",
+                  "border-radius": "12px",
+                  "borderRadius": "3px",
+                  "color": "#ffffff",
+                  "font-family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                  "font-weight": "600",
+                  "fontSize": "13px",
+                  "fontWeight": "bold",
+                  "paddingBottom": "10px",
+                  "paddingLeft": "25px",
+                  "paddingRight": "25px",
+                  "paddingTop": "10px"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "",
+        "type": "mj-body",
+        "children": [
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "0"
+                    },
+                    "content": "<div style=\"display: inline-block; width: 48px; height: 48px; background: #18181b; border-radius: 12px; line-height: 48px; font-size: 24px;\">??</div>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#18181b",
+                      "font-size": "24px",
+                      "font-weight": "700",
+                      "fontSize": "14px",
+                      "letter-spacing": "-0.01em",
+                      "lineHeight": "1.5",
+                      "padding-bottom": "8px",
+                      "padding-top": "20px"
+                    },
+                    "content": "New User Signup"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#71717a",
+                      "font-size": "14px",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5",
+                      "padding-top": "0"
+                    },
+                    "content": "Research Agent"
+                  }
+                ],
+                "attributes": {
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "paddingRight": "0px",
+                  "paddingTop": "0px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "40px 20px",
+              "paddingBottom": "20px",
+              "paddingLeft": "0px",
+              "paddingRight": "0px",
+              "paddingTop": "20px"
+            }
+          },
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "<p style=\"margin: 0 0 16px; font-size: 14px; color: #71717a;\">A new user has signed up for Research Agent:</p>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "<div style=\"background: linear-gradient(135deg, #fafafa 0%, #f4f1f0 25%, #f0f4f8 50%, #fdf4f4 75%, #fafafa 100%); border-radius: 12px; padding: 20px; margin: 0 0 24px;\">"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "<p style=\"margin: 0 0 12px; font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em;\">Email Address</p>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "<p style=\"margin: 0; font-size: 18px; font-weight: 600; color: #18181b; font-family: \"PT Mono\", monospace;\">{{new_user_email}}</p>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "</div>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "color": "#000000",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "<p style=\"margin: 0 0 8px; font-size: 13px; color: #71717a;\">?? <span style=\"font-family: \"PT Mono\", monospace;\">{{timestamp}}</span></p>"
+                  },
+                  {
+                    "id": "",
+                    "type": "mj-button",
+                    "attributes": {
+                      "background-color": "#18181b",
+                      "backgroundColor": "#414141",
+                      "borderRadius": "3px",
+                      "color": "#ffffff",
+                      "font-size": "14px",
+                      "fontSize": "13px",
+                      "fontWeight": "bold",
+                      "href": "mailto:{{new_user_email}}",
+                      "padding": "14px 28px",
+                      "paddingBottom": "10px",
+                      "paddingLeft": "25px",
+                      "paddingRight": "25px",
+                      "paddingTop": "10px"
+                    },
+                    "content": "Contact User"
+                  }
+                ],
+                "attributes": {
+                  "background-color": "#ffffff",
+                  "border-radius": "16px",
+                  "padding": "32px",
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "paddingRight": "0px",
+                  "paddingTop": "0px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "0 20px 40px",
+              "paddingBottom": "20px",
+              "paddingLeft": "0px",
+              "paddingRight": "0px",
+              "paddingTop": "20px"
+            }
+          },
+          {
+            "id": "",
+            "type": "mj-section",
+            "children": [
+              {
+                "id": "",
+                "type": "mj-column",
+                "children": [
+                  {
+                    "id": "",
+                    "type": "mj-text",
+                    "attributes": {
+                      "align": "center",
+                      "color": "#a1a1aa",
+                      "font-size": "12px",
+                      "fontSize": "14px",
+                      "lineHeight": "1.5"
+                    },
+                    "content": "Built with ?? by <a href=\"https://hoi-research.up.railway.app\" style=\"color: #18181b; text-decoration: none;\">Research Agent</a> � Privacy-First Search"
+                  }
+                ],
+                "attributes": {
+                  "paddingBottom": "0px",
+                  "paddingLeft": "0px",
+                  "paddingRight": "0px",
+                  "paddingTop": "0px"
+                }
+              }
+            ],
+            "attributes": {
+              "padding": "0 20px 40px",
+              "paddingBottom": "20px",
+              "paddingLeft": "0px",
+              "paddingRight": "0px",
+              "paddingTop": "20px"
+            }
+          }
+        ],
+        "attributes": {
+          "background-color": "#fafafa"
+        }
+      }
+    ]
+  },
+  "testData": {
+    "contact": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@example.com"
+    },
+    "list": {
+      "id": "newsletter",
+      "name": "Newsletter"
+    },
+    "unsubscribe_url": "https://hoi-email.up.railway.app/notification-center?action=unsubscribe&email=john.doe@example.com&lid=newsletter&lname=Newsletter&wid=hoi&mid=preview&email_hmac=abc123",
+    "confirm_subscription_url": "https://hoi-email.up.railway.app/notification-center?action=confirm&email=john.doe@example.com&lid=newsletter&lname=Newsletter&wid=hoi&mid=preview&email_hmac=abc123",
+    "notification_center_url": "https://hoi-email.up.railway.app/notification-center?email=john.doe@example.com&email_hmac=abc123&wid=hoi"
+  },
+  "exportedAt": "2026-03-05T22:23:36.156Z",
+  "version": "1.0"
+}

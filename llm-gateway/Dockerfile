@@ -10,11 +10,12 @@ FROM ubuntu:24.04 AS builder
 # Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Install build dependencies (including OpenSSL for HTTPS support)
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     cmake \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build llama.cpp with static linking
@@ -28,6 +29,7 @@ RUN cmake -B build \
     -DLLAMA_NATIVE=OFF \
     -DLLAMA_NO_ACCELERATE=ON \
     -DLLAMA_CUDA=OFF \
+    -DLLAMA_OPENSSL=ON \
     && cmake --build build --config Release -j$(nproc) \
     && cp build/bin/llama-server /usr/local/bin/ \
     && cp build/bin/llama-cli /usr/local/bin/
@@ -45,11 +47,12 @@ LABEL version="2.0.0"
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies
+# Install runtime dependencies (libssl3t64 for HTTPS support)
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     libgomp1 \
+    libssl3t64 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

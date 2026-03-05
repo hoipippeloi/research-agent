@@ -1,0 +1,81 @@
+  <mj-head>
+    <mj-title>New User Registration - Archive</mj-title>
+    <mj-preview>A new user has signed up for Archive</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" />
+      <mj-text font-size="14px" color="#18181b" line-height="1.5" />
+      <mj-section padding="0" />
+    </mj-attributes>
+    <mj-font
+      name="Inter"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    />
+    <mj-style inline="inline">
+      a { color: #18181b; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#fafafa">
+    <!-- Header with Logo -->
+    <mj-section padding="40px 20px 20px 20px">
+      <mj-column>
+        <mj-text align="center" padding="0">
+          <div style="display: inline-block; width: 48px; height: 48px; background: #18181b; border-radius: 12px; line-height: 48px; font-size: 24px; color: #ffffff;">✦</div>
+        </mj-text>
+        <mj-text font-size="20px" font-weight="600" color="#18181b" letter-spacing="-0.01em" align="center" padding-top="12px">
+          archive
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content Container -->
+    <mj-section padding="0 20px 40px 20px">
+      <mj-column background-color="#ffffff" border-radius="16px" padding="32px" border="1px solid rgba(228, 228, 231, 0.5)">
+        <!-- Title -->
+        <mj-text font-size="24px" font-weight="700" color="#18181b" letter-spacing="-0.01em" line-height="1.5" padding-bottom="8px" align="center">
+          New User Signup
+        </mj-text>
+
+        <mj-text font-size="14px" color="#71717a" padding-bottom="24px" align="center">
+          Archive
+        </mj-text>
+
+        <mj-text font-size="14px" color="#71717a" padding-bottom="16px">
+          A new user has signed up for Archive:
+        </mj-text>
+
+        <!-- User Information Card with Gradient Background -->
+        <mj-text padding="0 0 24px 0">
+          <div style="background: linear-gradient(135deg, #fafafa 0%, #f4f1f0 25%, #f0f4f8 50%, #fdf4f4 75%, #fafafa 100%); border-radius: 12px; padding: 20px;">
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em;">
+              Email Address
+            </p>
+            <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #18181b; font-family: 'Space Mono', 'Courier New', monospace;">
+              john.doe@example.com
+            </p>
+            <p style="margin: 0; font-size: 13px; color: #71717a;">
+              📅 <span style="font-family: 'Space Mono', 'Courier New', monospace;">January 15, 2025 at 10:30 AM</span>
+            </p>
+          </div>
+        </mj-text>
+
+        <!-- Action Button -->
+        <mj-button background-color="#18181b" color="#ffffff" font-size="14px" font-weight="600" border-radius="3px" inner-padding="10px 25px" href="mailto:john.doe@example.com">
+          Contact User
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section padding="0 20px 40px 20px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#a1a1aa" padding="20px 0 0 0">
+          Built with ❤️ by <a href="https://hoi-research.up.railway.app" style="color: #18181b; text-decoration: none; font-weight: 500;">Archive</a> • Privacy-First Search
+        </mj-text>
+        <mj-text align="center" font-size="11px" color="#a1a1aa" padding="10px 0 0 0">
+          © 2024 Archive. All rights reserved.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

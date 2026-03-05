@@ -1,0 +1,70 @@
+<mjml>
+  <mj-head>
+    <mj-title>Archive</mj-title>
+    <mj-preview>{{PreviewText}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" />
+      <mj-text font-size="14px" color="#18181b" line-height="1.5" />
+      <mj-section padding="0" />
+    </mj-attributes>
+    <mj-font
+      name="Inter"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    />
+    <mj-style inline="inline">
+      a { color: #18181b; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .link-underline { position: relative; }
+      .font-mono { font-family: 'Space Mono', 'Courier New', monospace; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#fafafa">
+    <!-- Header with Logo -->
+    <mj-section padding="40px 20px 20px 20px">
+      <mj-column>
+        <mj-table padding="0">
+          <tr>
+            <td align="center" style="padding: 0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width: auto;">
+                <tr>
+                  <td style="padding-right: 12px; vertical-align: middle;">
+                    <div style="width: 48px; height: 48px; background: #18181b; border-radius: 12px; display: inline-block; text-align: center; line-height: 48px;">
+                      <span style="color: #ffffff; font-size: 24px;">✦</span>
+                    </div>
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <span style="font-size: 20px; font-weight: 600; color: #18181b; letter-spacing: -0.01em;">archive</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content Container - Content injected here -->
+    <mj-section padding="0 20px 40px 20px">
+      <mj-column
+        background-color="#ffffff"
+        border-radius="16px"
+        padding="32px"
+        border="1px solid rgba(228, 228, 231, 0.5)"
+      >
+        {{Content}}
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section padding="0 20px 40px 20px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#a1a1aa" padding="20px 0 0 0">
+          Built with ❤️ by <a href="https://hoi-research.up.railway.app" style="color: #18181b; text-decoration: none; font-weight: 500;">Archive</a> • Privacy-First Search
+        </mj-text>
+        <mj-text align="center" font-size="11px" color="#a1a1aa" padding="10px 0 0 0">
+          © 2024 Archive. All rights reserved.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
