@@ -68,12 +68,22 @@
         await Promise.all([loadSearchHistory(), loadCollections()]);
     });
     
-    function handleEmailSubmit(email: string) {
+    async function handleEmailSubmit(email: string) {
         localStorage.setItem('user_email', email);
         currentUserEmail = email;
         showEmailModal = false;
-        loadSearchHistory();
-        loadCollections();
+        
+        try {
+            await fetch('/api/notify-new-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newUserEmail: email })
+            });
+        } catch (e) {
+            console.error('Failed to send notification:', e);
+        }
+        
+        await Promise.all([loadSearchHistory(), loadCollections()]);
     }
 
     $effect(() => {
