@@ -25,7 +25,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			body: JSON.stringify({
 				workspace_id: NOTIFUSE_WORKSPACE_ID,
 				notification: {
-					id: 'new-user-research-agent',
+					id: 'newuserresearchagent',
 					channels: ['email'],
 					contact: {
 						email: 'patrick@hoipippeloi.nl'
