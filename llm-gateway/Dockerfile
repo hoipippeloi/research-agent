@@ -89,11 +89,11 @@ WORKDIR /app
 # - --host 0.0.0.0: Bind to all interfaces (required for Railway)
 # - --port 8080: Use Railway's default port
 # - --ctx-size 262000: Full 262K context window for Qwen3.5
-# - -ngl 0: No GPU layers (CPU-only inference)
+# - --n-gpu-layers 0: No GPU layers (CPU-only inference)
 # - -t 4: Use 4 threads
 # - -b 512: Batch size for processing
 # - --alias: Model identifier for API responses
 # - Sampling parameters from unsloth recommendations for thinking mode
 # - --chat-template-kwargs: Enable thinking mode (disabled by default in 4B)
 
-CMD ["sh", "-c", "llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --ngl 0 --threads 4 --batch-size 512 --alias unsloth/Qwen3.5-4B-GGUF --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --chat-template-kwargs '{\"enable_thinking\":true}' --metrics --log-format text"]
+CMD ["sh", "-c", "llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --n-gpu-layers 0 --threads 4 --batch-size 512 --alias unsloth/Qwen3.5-4B-GGUF --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --chat-template-kwargs '{\"enable_thinking\":true}' --metrics --log-format text"]
