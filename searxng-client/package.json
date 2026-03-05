@@ -1,0 +1,23 @@
+{
+  "name": "searxng-client",
+  "version": "1.0.0",
+  "description": "Client library for SearXNG search API deployed on Railway",
+  "main": "searxng-client.js",
+  "types": "searxng-client.d.ts",
+  "scripts": {
+    "test": "node searxng-client.js",
+    "quickstart": "node quickstart.js"
+  },
+  "keywords": [
+    "searxng",
+    "search",
+    "api",
+    "privacy",
+    "metasearch"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

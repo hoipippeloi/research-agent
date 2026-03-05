@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Scattered Archive</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                font-family: "Inter", sans-serif;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+            ::selection {
+                background: #18181b;
+                color: #ffffff;
+            }
+            .font-mono {
+                font-family: "Space Mono", monospace;
+            }
+
+            /* Animated Background */
+            .animated-bg {
+                position: fixed;
+                inset: 0;
+                z-index: -1;
+                background: linear-gradient(
+                    135deg,
+                    #fafafa 0%,
+                    #f4f1f0 25%,
+                    #f0f4f8 50%,
+                    #fdf4f4 75%,
+                    #fafafa 100%
+                );
+                background-size: 400% 400%;
+                animation: gradientShift 20s ease infinite;
+            }
+
+            @keyframes gradientShift {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
+                }
+            }
+
+            /* Floating Blobs */
+            .blob {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(80px);
+                opacity: 0.4;
+                animation: floatBlob 15s ease-in-out infinite;
+            }
+            .blob-1 {
+                width: 600px;
+                height: 600px;
+                background: rgba(199, 210, 254, 0.5);
+                top: -200px;
+                left: -100px;
+                animation-delay: 0s;
+            }
+            .blob-2 {
+                width: 500px;
+                height: 500px;
+                background: rgba(253, 230, 138, 0.3);
+                bottom: -150px;
+                right: -100px;
+                animation-delay: -5s;
+            }
+            .blob-3 {
+                width: 400px;
+                height: 400px;
+                background: rgba(209, 250, 229, 0.4);
+                top: 50%;
+                left: 50%;
+                animation-delay: -10s;
+            }
+
+            @keyframes floatBlob {
+                0%,
+                100% {
+                    transform: translate(0, 0) scale(1);
+                }
+                33% {
+                    transform: translate(30px, -50px) scale(1.1);
+                }
+                66% {
+                    transform: translate(-20px, 20px) scale(0.9);
+                }
+            }
+
+            /* Card Scatter Effect */
+            .post-card {
+                transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .post-card:nth-child(1) {
+                transform: rotate(-1.5deg);
+            }
+            .post-card:nth-child(2) {
+                transform: rotate(1.2deg);
+            }
+            .post-card:nth-child(3) {
+                transform: rotate(-0.8deg);
+            }
+            .post-card:nth-child(4) {
+                transform: rotate(1.8deg);
+            }
+            .post-card:nth-child(5) {
+                transform: rotate(-1.2deg);
+            }
+            .post-card:nth-child(6) {
+                transform: rotate(0.5deg);
+            }
+
+            .post-card:hover {
+                transform: rotate(0deg) scale(1.03) translateY(-8px);
+                z-index: 50;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            }
+
+            /* Paper texture overlay */
+            .paper-texture {
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+                opacity: 0.03;
+            }
+
+            /* Underline reveal */
+            .link-underline {
+                position: relative;
+            }
+            .link-underline::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: #18181b;
+                transition: width 0.3s ease;
+            }
+            .link-underline:hover::after {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body class="min-h-screen text-zinc-900 overflow-x-hidden">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+        <div class="fixed inset-0 paper-texture pointer-events-none z-0"></div>
+
+        <!-- Header Navigation -->
+        <header class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+            <nav class="max-w-6xl mx-auto">
+                <div
+                    class="bg-white/70 backdrop-blur-xl rounded-2xl border border-zinc-200/50 px-6 py-3 flex items-center justify-between shadow-sm"
+                >
+                    <!-- Logo -->
+                    <a href="#" class="flex items-center gap-3 group">
+                        <div
+                            class="w-9 h-9 bg-zinc-900 rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300"
+                        >
+                            <span
+                                class="iconify text-white text-lg"
+                                data-icon="mdi:scatter-plot"
+                            ></span>
+                        </div>
+                        <span
+                            class="font-semibold tracking-tight hidden sm:block"
+                            >archive</span
+                        >
+                    </a>
+
+                    <!-- Nav Links -->
+                    <div class="flex items-center gap-2 sm:gap-6">
+                        <a
+                            href="#"
+                            class="text-sm font-medium px-3 py-1.5 bg-zinc-900 text-white rounded-lg"
+                            >Feed</a
+                        >
+                        <a
+                            href="#"
+                            class="text-sm text-zinc-500 hover:text-zinc-900 transition-colors hidden sm:block"
+                            >Tags</a
+                        >
+                        <a
+                            href="#"
+                            class="text-sm text-zinc-500 hover:text-zinc-900 transition-colors hidden sm:block"
+                            >About</a
+                        >
+                        <button
+                            class="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                        >
+                            <span
+                                class="iconify text-lg"
+                                data-icon="mdi:magnify"
+                            ></span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="relative z-10 pt-28 pb-24 px-6">
+            <div class="max-w-6xl mx-auto">
+                <!-- Intro Badge -->
+                <div class="flex items-center gap-3 mb-12">
+                    <div
+                        class="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur rounded-full border border-zinc-200/50 text-xs font-medium text-zinc-500"
+                    >
+                        <span
+                            class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
+                        ></span>
+                        Updated recently
+                    </div>
+                    <span class="text-xs text-zinc-400"
+                        >6 scattered thoughts</span
+                    >
+                </div>
+
+                <!-- Scattered Grid -->
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                >
+                    <!-- Card 1 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >001</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Design</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            The Art of Minimalist Design
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            Exploring how constraints breed creativity and why
+                            removing elements can often strengthen a design.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Dec 15, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 2 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >002</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Technology</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            Building for the Future
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            Sustainable development practices and why thinking
+                            long-term leads to better products.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Dec 12, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 3 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >003</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Typography</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            Typography in Digital Spaces
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            How choosing the right typeface can transform user
+                            experience and communicate brand personality.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Dec 8, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 4 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >004</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Philosophy</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            The Power of Constraints
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            Why limitations are not obstacles but opportunities
+                            for innovation and creative problem-solving.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Dec 5, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 5 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >005</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Color</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            Color Theory Essentials
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            Understanding the emotional impact of color choices
+                            and how to build palettes that resonate.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Dec 1, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 6 -->
+                    <article
+                        class="post-card bg-white rounded-2xl p-6 border border-zinc-200/70 shadow-sm cursor-pointer"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="font-mono text-xs text-zinc-300"
+                                >006</span
+                            >
+                            <span
+                                class="text-[10px] text-zinc-400 uppercase tracking-widest"
+                                >Accessibility</span
+                            >
+                        </div>
+                        <h2
+                            class="text-xl font-semibold tracking-tight mb-3 leading-snug"
+                        >
+                            Designing for Everyone
+                        </h2>
+                        <p
+                            class="text-zinc-500 text-sm font-light leading-relaxed mb-6"
+                        >
+                            Creating inclusive digital experiences that work for
+                            everyone, regardless of ability.
+                        </p>
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-zinc-100"
+                        >
+                            <span class="text-xs text-zinc-400"
+                                >Nov 28, 2024</span
+                            >
+                            <div class="flex items-center gap-2 text-zinc-900">
+                                <span class="text-xs font-medium link-underline"
+                                    >Explore</span
+                                >
+                                <span
+                                    class="iconify text-sm"
+                                    data-icon="mdi:arrow-top-right"
+                                ></span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Load More -->
+                <div class="flex justify-center mt-16">
+                    <button
+                        class="group flex items-center gap-3 px-6 py-3 bg-white/70 backdrop-blur rounded-full border border-zinc-200/50 text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:border-zinc-300 transition-all duration-300"
+                    >
+                        <span>Load more thoughts</span>
+                        <span
+                            class="iconify group-hover:rotate-90 transition-transform duration-300"
+                            data-icon="mdi:plus"
+                        ></span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Footer -->
+        <footer class="fixed bottom-6 left-6 right-6 z-40 pointer-events-none">
+            <div class="max-w-6xl mx-auto flex justify-between items-end">
+                <div
+                    class="pointer-events-auto bg-white/70 backdrop-blur-xl rounded-xl border border-zinc-200/50 px-4 py-2 shadow-sm"
+                >
+                    <span class="text-xs text-zinc-400">© 2024 Archive</span>
+                </div>
+                <div
+                    class="pointer-events-auto flex items-center gap-2 bg-white/70 backdrop-blur-xl rounded-xl border border-zinc-200/50 p-2 shadow-sm"
+                >
+                    <a
+                        href="#"
+                        class="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors"
+                    >
+                        <span
+                            class="iconify text-lg"
+                            data-icon="mdi:twitter"
+                        ></span>
+                    </a>
+                    <a
+                        href="#"
+                        class="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors"
+                    >
+                        <span
+                            class="iconify text-lg"
+                            data-icon="mdi:github"
+                        ></span>
+                    </a>
+                    <a
+                        href="#"
+                        class="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-900 transition-colors"
+                    >
+                        <span
+                            class="iconify text-lg"
+                            data-icon="mdi:email-outline"
+                        ></span>
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>

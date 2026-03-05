@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "Add AGENTS.md Within Directory": {
+      "source": "strativd/ai-skills",
+      "sourceType": "github",
+      "computedHash": "64e6c1d5aba535daae683e82bbaefb299c032542ef18037e07a2d07883fa3dde"
+    },
+    "drizzle-orm": {
+      "source": "bobmatnyc/claude-mpm-skills",
+      "sourceType": "github",
+      "computedHash": "9aea7469d696c9b5fa54a84b7a92ea692872fb624fb028f866ab0f3deac84867"
+    },
+    "railway-docs": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "f155b6ad89533b760c73c919b3e875e23d20c20771062b73b08f7ae1e4fe9a79"
+    },
+    "svelte5-best-practices": {
+      "source": "ejirocodes/agent-skills",
+      "sourceType": "github",
+      "computedHash": "bfcbba3d355aede6f6be9720f195206d4dcaa7c152787ea00c06cb4a1ac44ba4"
+    },
+    "tdd-workflow": {
+      "source": "congdon1207/agents.md",
+      "sourceType": "github",
+      "computedHash": "5c33b5e16ea1058ba1fff0d8380605f68872477f9e3a281e0e349aeca090b009"
+    }
+  }
+}

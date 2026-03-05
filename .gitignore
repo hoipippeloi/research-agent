@@ -1,30 +1,43 @@
 # Dependencies
 node_modules/
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-pip-log.txt
-pip-delete-this-directory.txt
-.pytest_cache/
-.mypy_cache/
-.dmypy.json
-dmypy.json
+venv/
+env/
+ENV/
 
-# Environment variables
+# Build outputs
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# SvelteKit (frontend has its own .gitignore but let's be safe)
+.svelte-kit/
+
+# Environment files
 .env
-.env.local
-.env.*.local
-*.env
+.env.*
+!.env.example
 
-# IDEs
-.vscode/
+# IDEs and editors
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Logs
 logs/
@@ -32,43 +45,16 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
-# Build outputs
-dist/
-build/
-*.egg-info/
-.eggs/
-*.egg
+# Archives and temporary files
+.archive/
+*.tmp
+*.temp
 
-# Testing
-coverage/
-.nyc_output/
-.coverage
-htmlcov/
-
-# Docker
-*.log
-
-# OS
+# OS files
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.bak
-
-# Package manager
-.npm
-.eslintcache
-.stylelintcache
-
-# Railway
-.railway/
