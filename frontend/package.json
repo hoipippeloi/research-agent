@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "start": "node build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -33,6 +34,7 @@
   },
   "dependencies": {
     "@iconify/svelte": "^5.2.1",
+    "@sveltejs/adapter-node": "^5.5.4",
     "@types/three": "^0.183.1",
     "axios": "^1.13.6",
     "d3": "^7.9.0",

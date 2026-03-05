@@ -1262,12 +1262,7 @@
     class="fixed bottom-6 left-6 right-6 z-40 pointer-events-none ui-scaled-footer"
     style="transform: scale({$uiScale}); transform-origin: bottom center;"
 >
-    <div class="max-w-6xl mx-auto flex justify-between items-end">
-        <div
-            class="pointer-events-auto bg-white/70 backdrop-blur-xl rounded-xl border border-zinc-200/50 px-4 py-2 shadow-sm"
-        >
-            <span class="text-xs text-zinc-400">© 2024 Search Archive</span>
-        </div>
+    <div class="max-w-6xl mx-auto flex justify-center items-end">
         <div
             class="pointer-events-auto flex items-center gap-2 bg-white/70 backdrop-blur-xl rounded-xl border border-zinc-200/50 p-2 shadow-sm"
         >

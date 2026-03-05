@@ -41,13 +41,11 @@ RUN cmake -B build \
     && cp build/bin/llama-server /usr/local/bin/ \
     && cp build/bin/llama-cli /usr/local/bin/
 
-# Download Qwen3.5-4B-Instruct GGUF model (Q4_K_M quantization, ~3GB)
+# Download Qwen3.5-4B GGUF model from unsloth (optimized Dynamic 2.0 quantization)
+# Using wget for reliable downloads in Railway's build environment
 WORKDIR /models
-RUN /opt/venv/bin/huggingface-cli download \
-    Qwen/Qwen3.5-4B-Instruct-GGUF \
-    qwen3.5-4b-instruct-q4_K_M.gguf \
-    --local-dir /models \
-    --local-dir-use-symlinks False
+RUN wget -q https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf \
+    -O /models/Qwen3.5-4B-Q4_K_M.gguf
 
 # ============================================
 # Stage 2: Runtime image
@@ -77,7 +75,7 @@ COPY --from=builder /usr/local/bin/llama-server /usr/local/bin/llama-server
 COPY --from=builder /usr/local/bin/llama-cli /usr/local/bin/llama-cli
 
 # Copy model from builder
-COPY --from=builder /models/qwen3.5-4b-instruct-q4_K_M.gguf /models/qwen3.5-4b-instruct-q4_K_M.gguf
+COPY --from=builder /models/Qwen3.5-4B-Q4_K_M.gguf /models/Qwen3.5-4B-Q4_K_M.gguf
 
 # Set proper permissions
 RUN chown -R llm:llm /models
@@ -85,7 +83,7 @@ RUN chown -R llm:llm /models
 # Environment variables with Railway-compatible defaults
 ENV HOST=0.0.0.0 \
     PORT=8080 \
-    MODEL_PATH=/models/qwen3.5-4b-instruct-q4_K_M.gguf \
+    MODEL_PATH=/models/Qwen3.5-4B-Q4_K_M.gguf \
     CONTEXT_SIZE=262000 \
     GPU_LAYERS=0 \
     THREADS=4 \
@@ -124,6 +122,13 @@ CMD ["sh", "-c", "llama-server ${MODEL_PATH} \
     -ngl ${GPU_LAYERS} \
     -t ${THREADS} \
     -b ${BATCH_SIZE} \
+    --alias 'unsloth/Qwen3.5-4B-GGUF' \
+    --temp 1.0 \
+    --top-p 0.95 \
+    --top-k 20 \
+    --min-p 0.0 \
+    --presence-penalty 1.5 \
     --chat-template qwen3.5 \
+    --chat-template-kwargs '{\"enable_thinking\":true}' \
     --metrics \
     --log-format text"]
