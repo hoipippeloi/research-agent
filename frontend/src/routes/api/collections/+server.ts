@@ -1,19 +1,25 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getDb, collections } from "$lib/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 
 /**
- * GET /api/collections
- * List all collections ordered by most recently updated
+ * GET /api/collections?userEmail=xxx
+ * List all collections for a user ordered by most recently updated
  */
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ url }) => {
   try {
     const db = getDb();
+    const userEmail = url.searchParams.get("userEmail");
+
+    if (!userEmail) {
+      return json({ error: "userEmail is required" }, { status: 400 });
+    }
 
     const allCollections = await db!
       .select()
       .from(collections)
+      .where(eq(collections.userEmail, userEmail))
       .orderBy(desc(collections.updatedAt));
 
     return json(allCollections);
@@ -26,24 +32,31 @@ export const GET: RequestHandler = async () => {
 /**
  * POST /api/collections
  * Create a new collection from a topic
- * Body: { topic: string }
+ * Body: { topic: string, userEmail: string }
  */
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const db = getDb();
     const body = await request.json();
 
-    const { topic } = body;
+    const { topic, userEmail } = body;
 
     if (!topic || typeof topic !== "string" || topic.trim() === "") {
       return json({ error: "Topic is required" }, { status: 400 });
     }
 
-    // Check if collection with this topic already exists
+    if (!userEmail) {
+      return json({ error: "userEmail is required" }, { status: 400 });
+    }
+
+    // Check if collection with this topic already exists for this user
     const existing = await db!
       .select()
       .from(collections)
-      .where(eq(collections.topic, topic.trim()))
+      .where(and(
+        eq(collections.topic, topic.trim()),
+        eq(collections.userEmail, userEmail)
+      ))
       .limit(1);
 
     if (existing.length > 0) {
@@ -51,11 +64,12 @@ export const POST: RequestHandler = async ({ request }) => {
       return json(existing[0]);
     }
 
-    // Create new collection with just the topic
+    // Create new collection with the topic and userEmail
     const newCollection = await db!
       .insert(collections)
       .values({
         topic: topic.trim(),
+        userEmail: userEmail,
       })
       .returning();
 
@@ -67,16 +81,21 @@ export const POST: RequestHandler = async ({ request }) => {
 };
 
 /**
- * DELETE /api/collections?id=xx
- * Delete a collection by ID
+ * DELETE /api/collections?id=xx&userEmail=xxx
+ * Delete a collection by ID for a specific user
  */
 export const DELETE: RequestHandler = async ({ url }) => {
   try {
     const db = getDb();
     const id = url.searchParams.get("id");
+    const userEmail = url.searchParams.get("userEmail");
 
     if (!id) {
       return json({ error: "ID is required" }, { status: 400 });
+    }
+
+    if (!userEmail) {
+      return json({ error: "userEmail is required" }, { status: 400 });
     }
 
     const numericId = parseInt(id, 10);
@@ -87,7 +106,10 @@ export const DELETE: RequestHandler = async ({ url }) => {
     // Delete the collection (cascade will handle collectionSearches)
     const deleted = await db!
       .delete(collections)
-      .where(eq(collections.id, numericId))
+      .where(and(
+        eq(collections.id, numericId),
+        eq(collections.userEmail, userEmail)
+      ))
       .returning();
 
     if (deleted.length === 0) {

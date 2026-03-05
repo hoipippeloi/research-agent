@@ -13,9 +13,14 @@ export const GET: RequestHandler = async ({ url }) => {
     const query = url.searchParams.get("query");
     const engine = url.searchParams.get("engine") || "general";
     const cacheOnly = url.searchParams.get("cacheOnly") === "true";
+    const userEmail = url.searchParams.get("userEmail");
 
     if (!query) {
       return json({ error: "Query is required" }, { status: 400 });
+    }
+
+    if (!userEmail) {
+      return json({ error: "userEmail is required" }, { status: 400 });
     }
 
     // Check cache
@@ -67,6 +72,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // Save to search history
     await saveSearch({
+      userEmail,
       query,
       engine: engines.join(","),
       resultsCount: dedupedResults.length,
@@ -86,10 +92,14 @@ export const GET: RequestHandler = async ({ url }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { query, engine = "general" } = await request.json();
+    const { query, engine = "general", userEmail } = await request.json();
 
     if (!query || typeof query !== "string") {
       return json({ error: "Query is required" }, { status: 400 });
+    }
+
+    if (!userEmail) {
+      return json({ error: "userEmail is required" }, { status: 400 });
     }
 
     // Check cache first
@@ -100,6 +110,7 @@ export const POST: RequestHandler = async ({ request }) => {
       // Still save to search history
       const engines = getEnginesForType(engine);
       await saveSearch({
+        userEmail,
         query,
         engine: engines.join(","),
         resultsCount: cached.count,
@@ -142,6 +153,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // Save to search history
     await saveSearch({
+      userEmail,
       query,
       engine: engines.join(","),
       resultsCount: dedupedResults.length,

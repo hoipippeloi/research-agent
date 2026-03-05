@@ -16,6 +16,7 @@ export function getRedis(): Redis {
 
 export interface SearchHistory {
   id: string;
+  userEmail: string;
   query: string;
   timestamp: number;
   engine: string;
@@ -26,27 +27,30 @@ export async function saveSearch(
   search: Omit<SearchHistory, "id" | "timestamp">,
 ): Promise<string> {
   const client = getRedis();
-  const id = `search:${Date.now()}:${Math.random().toString(36).substring(7)}`;
+  const id = `search:${search.userEmail}:${Date.now()}:${Math.random().toString(36).substring(7)}`;
 
   await client.hset(id, {
+    userEmail: search.userEmail,
     query: search.query,
     timestamp: Date.now().toString(),
     engine: search.engine,
     resultsCount: search.resultsCount.toString(),
   });
 
-  await client.zadd("search:history", Date.now(), id);
-  await client.lpush("search:recent", id);
-  await client.ltrim("search:recent", 0, 99);
+  // Use user-specific sorted set and list
+  await client.zadd(`search:history:${search.userEmail}`, Date.now(), id);
+  await client.lpush(`search:recent:${search.userEmail}`, id);
+  await client.ltrim(`search:recent:${search.userEmail}`, 0, 99);
 
   return id;
 }
 
 export async function getRecentSearches(
+  userEmail: string,
   limit: number = 6,
 ): Promise<SearchHistory[]> {
   const client = getRedis();
-  const ids = await client.lrange("search:recent", 0, limit - 1);
+  const ids = await client.lrange(`search:recent:${userEmail}`, 0, limit - 1);
 
   const searches: SearchHistory[] = [];
 
@@ -55,6 +59,7 @@ export async function getRecentSearches(
     if (data && data.query) {
       searches.push({
         id,
+        userEmail: data.userEmail,
         query: data.query,
         timestamp: parseInt(data.timestamp),
         engine: data.engine,
@@ -66,11 +71,11 @@ export async function getRecentSearches(
   return searches;
 }
 
-export async function deleteSearch(id: string): Promise<void> {
+export async function deleteSearch(userEmail: string, id: string): Promise<void> {
   const client = getRedis();
   await client.del(id);
-  await client.lrem("search:recent", 0, id);
-  await client.zrem("search:history", id);
+  await client.lrem(`search:recent:${userEmail}`, 0, id);
+  await client.zrem(`search:history:${userEmail}`, id);
 }
 
 /**

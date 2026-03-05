@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { getDb } from '$lib/db';
 import { savedResults } from '$lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ request, url }) => {
 	const db = getDb();
@@ -16,8 +16,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
 		const title = body.title;
 		const collectionId = body.collectionId;
 		const sourceUrl = body.url;
+		const userEmail = body.userEmail;
 		
-		if (!markdown || !collectionId || !sourceUrl) {
+		if (!markdown || !collectionId || !sourceUrl || !userEmail) {
 			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 		
@@ -25,7 +26,10 @@ export const POST: RequestHandler = async ({ request, url }) => {
 		
 		const existingResult = await db.select()
 			.from(savedResults)
-			.where(eq(savedResults.url, sourceUrl))
+			.where(and(
+				eq(savedResults.url, sourceUrl),
+				eq(savedResults.userEmail, userEmail)
+			))
 			.limit(1);
 		
 		if (existingResult.length > 0) {
@@ -43,6 +47,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 		}
 		
 		const result = await db.insert(savedResults).values({
+			userEmail: userEmail,
 			url: sourceUrl,
 			title: title || new URL(sourceUrl).hostname,
 			content: markdown,

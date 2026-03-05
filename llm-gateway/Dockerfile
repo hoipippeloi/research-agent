@@ -34,6 +34,7 @@ RUN git clone https://github.com/ggerganov/llama.cpp.git
 WORKDIR /build/llama.cpp
 RUN cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF \
     -DLLAMA_NATIVE=OFF \
     -DLLAMA_NO_ACCELERATE=ON \
     -DLLAMA_CUDA=OFF \

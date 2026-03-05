@@ -8,7 +8,7 @@ import * as schema from './schema';
  * Priority: DATABASE_URL > POSTGRES_URL
  */
 const getDatabaseUrl = (): string | undefined => {
-  return env.DATABASE_URL || env.POSTGRES_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  return env.DATABASE_URL || env.POSTGRES_URL;
 };
 
 const DATABASE_URL = getDatabaseUrl();

@@ -18,6 +18,7 @@ export const searches = pgTable(
   "searches",
   {
     id: serial("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
     query: text("query").notNull(),
     engine: text("engine").notNull(), // e.g., 'general', 'code', 'academic'
     engines: text("engines").array(), // Array of specific engines used: ['brave', 'github']
@@ -31,6 +32,7 @@ export const searches = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
+    userEmailIdx: index("searches_user_email_idx").on(table.userEmail),
     queryIdx: index("searches_query_idx").on(table.query),
     createdAtIdx: index("searches_created_at_idx").on(table.createdAt),
     engineIdx: index("searches_engine_idx").on(table.engine),
@@ -45,6 +47,7 @@ export const savedResults = pgTable(
   "saved_results",
   {
     id: serial("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
     searchId: integer("search_id").references(() => searches.id, {
       onDelete: "cascade",
     }),
@@ -69,6 +72,7 @@ export const savedResults = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
+    userEmailIdx: index("saved_results_user_email_idx").on(table.userEmail),
     urlIdx: index("saved_results_url_idx").on(table.url),
     searchIdx: index("saved_results_search_idx").on(table.searchId),
     projectIdx: index("saved_results_project_idx").on(table.projectId),
@@ -84,6 +88,7 @@ export const researchProjects = pgTable(
   "research_projects",
   {
     id: serial("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     color: text("color").default("#3b82f6"), // For UI coloring
@@ -98,6 +103,7 @@ export const researchProjects = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
+    userEmailIdx: index("research_projects_user_email_idx").on(table.userEmail),
     createdAtIdx: index("research_projects_created_at_idx").on(table.createdAt),
     isArchivedIdx: index("research_projects_is_archived_idx").on(
       table.isArchived,
@@ -148,21 +154,27 @@ export const collectionSearches = pgTable(
  * User preferences and settings
  * Can be extended for multi-tenant/user accounts later
  */
-export const userPreferences = pgTable("user_preferences", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id"), // For future multi-user support
-  defaultSearchEngine: text("default_search_engine").default("general"),
-  defaultEngines: text("default_engines")
-    .array()
-    .default(["brave", "duckduckgo"]),
-  theme: text("theme").default("system"),
-  resultsPerPage: integer("results_per_page").default(10),
-  cacheResults: boolean("cache_results").default(true),
-  autoSaveSearches: boolean("auto_save_searches").default(true),
-  settings: jsonb("settings").$type<Record<string, any>>(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const userPreferences = pgTable(
+  "user_preferences",
+  {
+    id: serial("id").primaryKey(),
+    userEmail: text("user_email").notNull().unique(),
+    defaultSearchEngine: text("default_search_engine").default("general"),
+    defaultEngines: text("default_engines")
+      .array()
+      .default(["brave", "duckduckgo"]),
+    theme: text("theme").default("system"),
+    resultsPerPage: integer("results_per_page").default(10),
+    cacheResults: boolean("cache_results").default(true),
+    autoSaveSearches: boolean("auto_save_searches").default(true),
+    settings: jsonb("settings").$type<Record<string, any>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userEmailIdx: index("user_preferences_user_email_idx").on(table.userEmail),
+  }),
+);
 
 /**
  * Collections - saved topic collections for organizing searches
@@ -171,6 +183,7 @@ export const collections = pgTable(
   "collections",
   {
     id: serial("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
     topic: text("topic").notNull(), // The search query/topic
     description: text("description"), // Optional description
     searchCount: integer("search_count").default(1), // Number of times this topic was searched
@@ -183,6 +196,7 @@ export const collections = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
+    userEmailIdx: index("collections_user_email_idx").on(table.userEmail),
     topicIdx: index("collections_topic_idx").on(table.topic),
     createdAtIdx: index("collections_created_at_idx").on(table.createdAt),
   }),
