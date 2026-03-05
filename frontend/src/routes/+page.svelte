@@ -192,10 +192,15 @@
                 isFromCache = data.cached || false;
                 cachedAt = data.cachedAt || null;
             } else {
-                console.error("Failed to load results");
+                toast.error('Failed to load results', {
+                    description: 'Could not retrieve search results from cache'
+                });
             }
         } catch (err) {
             console.error("Error loading results:", err);
+            toast.error('Failed to load results', {
+                description: 'An unexpected error occurred'
+            });
         } finally {
             isLoadingResults = false;
             isFetchingResults = false;
@@ -296,9 +301,16 @@
             if (response.ok) {
                 searchHistory = await response.json();
                 await aggregateSearchHistory();
+            } else {
+                toast.error('Failed to load search history', {
+                    description: 'Could not retrieve search history from database'
+                });
             }
         } catch (err) {
             console.error("Failed to load search history:", err);
+            toast.error('Failed to load search history', {
+                description: 'An unexpected error occurred'
+            });
         }
     }
 

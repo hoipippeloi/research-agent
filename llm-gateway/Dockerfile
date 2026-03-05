@@ -43,7 +43,7 @@ RUN cmake -B build \
 
 # Download Qwen3.5-4B-Instruct GGUF model (Q4_K_M quantization, ~3GB)
 WORKDIR /models
-RUN huggingface-cli download \
+RUN /opt/venv/bin/huggingface-cli download \
     Qwen/Qwen3.5-4B-Instruct-GGUF \
     qwen3.5-4b-instruct-q4_K_M.gguf \
     --local-dir /models \
