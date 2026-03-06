@@ -31,7 +31,7 @@
     }
 
     ::selection {
-        background: #18181b;
+        background: #00b7b5;
         color: #ffffff;
     }
 
@@ -69,11 +69,11 @@
         z-index: -10;
         background: linear-gradient(
             135deg,
-            #fafafa 0%,
-            #f4f1f0 25%,
-            #f0f4f8 50%,
-            #fdf4f4 75%,
-            #fafafa 100%
+            #f4f4f4 0%,
+            #e8f8f8 25%,
+            #f0f9fa 50%,
+            #e6fdfa 75%,
+            #f4f4f4 100%
         );
         background-size: 400% 400%;
         animation: gradientShift 20s ease infinite;
@@ -102,7 +102,7 @@
     .blob-1 {
         width: 600px;
         height: 600px;
-        background: rgba(199, 210, 254, 0.5);
+        background: rgba(1, 135, 144, 0.4);
         top: -200px;
         left: -100px;
         animation-delay: 0s;
@@ -111,7 +111,7 @@
     .blob-2 {
         width: 500px;
         height: 500px;
-        background: rgba(253, 230, 138, 0.3);
+        background: rgba(0, 183, 181, 0.35);
         bottom: -150px;
         right: -100px;
         animation-delay: -5s;
@@ -120,7 +120,7 @@
     .blob-3 {
         width: 400px;
         height: 400px;
-        background: rgba(209, 250, 229, 0.4);
+        background: rgba(0, 84, 97, 0.3);
         top: 50%;
         left: 50%;
         animation-delay: -10s;
@@ -189,7 +189,7 @@
         left: 0;
         width: 0;
         height: 2px;
-        background: #18181b;
+        background: #005461;
         transition: width 0.3s ease;
     }
 

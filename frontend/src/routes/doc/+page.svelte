@@ -333,7 +333,7 @@
                     >
                         <span
                             class="text-[10px] font-medium px-2 py-0.5 rounded-full {currentCollection
-                                ? 'text-amber-600 bg-amber-50'
+                                ? 'text-[#018790] bg-[#00b7b5]/10'
                                 : 'text-zinc-500 bg-zinc-100'}"
                         >
                             {currentCollection
@@ -393,7 +393,7 @@
                     </button>
                     <button
                         onclick={handleSaveClick}
-                        class="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors flex items-center gap-2"
+                        class="px-4 py-2 bg-[#005461] text-white rounded-lg text-sm font-medium hover:bg-[#018790] transition-colors flex items-center gap-2"
                     >
                         <Icon icon="mdi:content-save" class="text-base" />
                         Save Document
@@ -469,7 +469,7 @@
                                 onclick={() => (selectedCollectionId = null)}
                                 class="w-full p-3 rounded-lg border-2 text-left transition-all {selectedCollectionId ===
                                 null
-                                    ? 'border-zinc-900 bg-zinc-50'
+                                    ? 'border-[#018790] bg-[#00b7b5]/10'
                                     : 'border-zinc-200 hover:border-zinc-300'}"
                             >
                                 <div class="flex items-center gap-3">
@@ -498,16 +498,16 @@
                                         (selectedCollectionId = collection.id)}
                                     class="w-full p-3 rounded-lg border-2 text-left transition-all {selectedCollectionId ===
                                     collection.id
-                                        ? 'border-zinc-900 bg-zinc-50'
+                                        ? 'border-[#018790] bg-[#00b7b5]/10'
                                         : 'border-zinc-200 hover:border-zinc-300'}"
                                 >
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"
+                                            class="w-8 h-8 rounded-lg bg-[#00b7b5]/15 flex items-center justify-center"
                                         >
                                             <Icon
                                                 icon="mdi:folder"
-                                                class="text-lg text-indigo-600"
+                                                class="text-lg text-[#018790]"
                                             />
                                         </div>
                                         <div class="flex-1 min-w-0">
@@ -540,7 +540,7 @@
                     <button
                         onclick={handleSaveToCollection}
                         disabled={isSaving}
-                        class="flex-1 px-4 py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        class="flex-1 px-4 py-2.5 bg-[#005461] text-white rounded-lg text-sm font-medium hover:bg-[#018790] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {#if isSaving}
                             <Icon

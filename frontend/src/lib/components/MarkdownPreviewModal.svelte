@@ -245,7 +245,7 @@
                         <p class="text-sm text-zinc-500 mb-4">{error}</p>
                         <button
                             onclick={fetchMarkdown}
-                            class="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors"
+                            class="px-4 py-2 bg-[#005461] text-white rounded-lg text-sm font-medium hover:bg-[#018790] transition-colors"
                         >
                             Try Again
                         </button>
@@ -289,7 +289,7 @@
                             </select>
                             {#if selectedCollection}
                                 <span
-                                    class="text-[10px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full"
+                                    class="text-[10px] text-[#018790] font-medium bg-[#00b7b5]/10 px-2 py-0.5 rounded-full"
                                 >
                                     {selectedCollection.topic}
                                 </span>
@@ -336,7 +336,7 @@
                             disabled={isSaving ||
                                 !title.trim() ||
                                 !selectedCollectionId}
-                            class="px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            class="px-4 py-2 text-sm font-medium bg-[#005461] text-white hover:bg-[#018790] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {#if isSaving}
                                 <Icon

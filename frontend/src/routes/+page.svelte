@@ -759,7 +759,7 @@
         try {
             deletingNoteId = id;
             const response = await fetch(
-                `/api/notes?id=${id}&userEmail=${encodeURIComponent(currentUserEmail)}`,
+                `/api/documents/${id}?userEmail=${encodeURIComponent(currentUserEmail)}`,
                 {
                     method: "DELETE",
                 },
@@ -1199,7 +1199,7 @@
                         Searching...
                     </div>
                 </div>
-            {:else if searchHistory.length > 0}
+            {:else if !isInitialLoad}
                 <div class="mb-8">
                     <!-- Tabs UI -->
                     <div class="flex items-center gap-3 mb-6">
@@ -1693,6 +1693,28 @@
                                             }
                                         }}
                                     >
+                                        <!-- Delete Button -->
+                                        <button
+                                            onclick={(e) =>
+                                                handleDeleteNote(note.id, e)}
+                                            disabled={deletingNoteId ===
+                                                note.id}
+                                            class="absolute bottom-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 opacity-0 group-hover:opacity-100 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
+                                            title="Delete document"
+                                        >
+                                            {#if deletingNoteId === note.id}
+                                                <Icon
+                                                    icon="mdi:loading"
+                                                    class="text-xs animate-spin"
+                                                />
+                                            {:else}
+                                                <Icon
+                                                    icon="mdi:trash-can-outline"
+                                                    class="text-xs"
+                                                />
+                                            {/if}
+                                        </button>
+
                                         <div
                                             class="flex items-center justify-between mb-3"
                                         >
@@ -1895,21 +1917,6 @@
                         />
                     </div>
                     <p class="text-zinc-500 text-sm">Loading...</p>
-                </div>
-            {:else}
-                <!-- Empty State -->
-                <div class="text-center py-16">
-                    <div
-                        class="inline-flex items-center justify-center w-16 h-16 bg-white/60 backdrop-blur rounded-2xl border border-zinc-200/50 mb-4"
-                    >
-                        <Icon
-                            icon="mdi:history"
-                            class="text-zinc-400 text-3xl"
-                        />
-                    </div>
-                    <p class="text-zinc-500 text-sm">
-                        No recent searches yet. Try searching for something!
-                    </p>
                 </div>
             {/if}
         </div>
