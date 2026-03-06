@@ -1,0 +1,1 @@
+ALTER TABLE "saved_results" ADD COLUMN "excerpt" text;

@@ -37,10 +37,12 @@
     "@sveltejs/adapter-node": "^5.5.4",
     "@types/three": "^0.183.1",
     "axios": "^1.13.6",
+    "carta-md": "^4.11.1",
     "d3": "^7.9.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.3",
     "ioredis": "^5.10.0",
+    "isomorphic-dompurify": "^3.0.0",
     "postgres": "^3.4.5",
     "svelte-sonner": "^1.0.8",
     "three": "^0.183.2"

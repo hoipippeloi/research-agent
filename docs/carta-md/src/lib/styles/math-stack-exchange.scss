@@ -1,0 +1,110 @@
+.math-stack-exchange-container {
+	background-color: #252526;
+	border-radius: 0.25rem;
+}
+
+.carta-theme__math-stack-exchange {
+	// Core styles
+	$background: #252526;
+	$background-light: #333333;
+	$border: #333333;
+	$accent: #2e8acb;
+
+	&.carta-editor {
+		background-color: $background;
+		border: 1px solid $border;
+		border-radius: 0.25rem;
+
+		.carta-wrapper {
+			padding: 1rem;
+			flex-grow: 1;
+			overflow-y: auto;
+			border-bottom-left-radius: 0.25rem;
+			border-bottom-right-radius: 0.25rem;
+
+			&:focus-within {
+				outline: 3px solid rgba($accent, 0.5);
+			}
+		}
+
+		.carta-input,
+		.carta-renderer {
+			height: 200px;
+			overflow: auto;
+		}
+
+		.carta-font-code {
+			font-family: 'Fira Code', monospace;
+			caret-color: white;
+			font-size: 1.1rem;
+		}
+
+		.carta-toolbar {
+			height: 2.5rem;
+
+			background-color: $background-light;
+			border-bottom: 1px solid $border;
+
+			padding-right: 12px;
+			border-top-left-radius: 0.25rem;
+			border-top-right-radius: 0.25rem;
+
+			.carta-icon {
+				width: 2rem;
+				height: 2rem;
+
+				&:hover {
+					color: white;
+					background-color: $border;
+				}
+			}
+		}
+
+		.carta-toolbar-left {
+			display: none;
+		}
+
+		.carta-toolbar-right {
+			justify-content: flex-start;
+		}
+	}
+
+	.carta-icons-menu {
+		padding: 8px;
+		border: 1px solid $border;
+		border-radius: 6px;
+		min-width: 180px;
+		background: $background;
+
+		.carta-icon-full {
+			padding-left: 6px;
+			padding-right: 6px;
+
+			margin-top: 2px;
+			&:first-child {
+				margin-top: 0;
+			}
+
+			&:hover {
+				color: white;
+				background-color: $border;
+			}
+
+			span {
+				margin-left: 6px;
+				color: white;
+				font-size: 0.85rem;
+			}
+		}
+	}
+
+	&.carta-viewer {
+		min-height: 60px;
+		padding: 1rem;
+	}
+}
+
+html.dark .carta-theme__math-stack-exchange .shiki,
+html.dark .carta-theme__math-stack-exchange .shiki span {
+	color: var(--shiki-dark) !important;
+}

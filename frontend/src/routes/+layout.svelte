@@ -1,18 +1,22 @@
 <script lang="ts">
-	import '../app.css';
-	import { Toaster } from 'svelte-sonner';
+    import "../app.css";
+    import { Toaster } from "svelte-sonner";
 
-	let { children } = $props();
+    let { children } = $props();
 </script>
 
 <svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=PT+Mono&display=swap"
-		rel="stylesheet"
-	/>
-	<title>Search Archive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin="anonymous"
+    />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=PT+Mono&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet"
+    />
+    <title>Search Archive</title>
 </svelte:head>
 
 <Toaster position="bottom-right" />

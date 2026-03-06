@@ -60,9 +60,11 @@ export const savedResults = pgTable(
     url: text("url").notNull(),
     title: text("title").notNull(),
     content: text("content"),
+    excerpt: text("excerpt"),
     thumbnail: text("thumbnail"),
     publishedDate: text("published_date"),
     engine: text("engine"), // Which engine returned this result
+    type: text("type"), // Type of result (e.g., 'web', 'image', 'video', 'code', 'academic', 'document')
     score: integer("score"), // Relevance score from search engine
     tags: text("tags").array().default([]),
     notes: text("notes"), // User notes about this result

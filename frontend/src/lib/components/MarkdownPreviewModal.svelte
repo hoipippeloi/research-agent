@@ -1,18 +1,31 @@
 <script lang="ts">
     import Icon from "@iconify/svelte";
+    import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
+    import type { Collection } from "$lib/db/schema";
 
     interface Props {
         open: boolean;
         url: string;
         onClose: () => void;
-        onSave?: (markdown: string, url: string) => void;
+        collections: Collection[];
+        userEmail: string;
     }
 
-    let { open, url, onClose, onSave }: Props = $props();
+    let { open, url, onClose, collections, userEmail }: Props = $props();
+
+    let title = $state("");
     let markdown = $state("");
+    let selectedCollectionId = $state<number | null>(null);
     let isLoading = $state(false);
+    let isSaving = $state(false);
     let error = $state("");
-    let hasYamlFrontmatter = $derived(markdown.startsWith("---\n"));
+
+    // Derived values
+    let selectedCollection = $derived(
+        selectedCollectionId
+            ? collections.find((c) => c.id === selectedCollectionId)
+            : null,
+    );
 
     async function fetchMarkdown() {
         if (!url) return;
@@ -20,6 +33,7 @@
         isLoading = true;
         error = "";
         markdown = "";
+        title = "";
 
         try {
             const domain = url.replace(/^https?:\/\//, "");
@@ -30,6 +44,14 @@
             }
 
             markdown = await response.text();
+            // Extract title from URL or first heading
+            title = getDomain(url);
+
+            // Try to extract title from markdown
+            const titleMatch = markdown.match(/^#\s+(.+)$/m);
+            if (titleMatch) {
+                title = titleMatch[1];
+            }
         } catch (err) {
             console.error("Error fetching markdown:", err);
             error = "Failed to fetch markdown. Please try again.";
@@ -38,23 +60,52 @@
         }
     }
 
-    function handleCopy() {
-        navigator.clipboard.writeText(markdown);
-    }
+    async function handleSave() {
+        if (!title.trim()) {
+            error = "Please enter a title";
+            return;
+        }
 
-    function handleDownload() {
-        const blob = new Blob([markdown], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${getDomain(url)}.md`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
+        if (!selectedCollectionId) {
+            error = "Please select a collection";
+            return;
+        }
 
-    function handleSave() {
-        if (onSave) {
-            onSave(markdown, url);
+        if (!markdown.trim()) {
+            error = "Please enter some content";
+            return;
+        }
+
+        try {
+            isSaving = true;
+            error = "";
+
+            const response = await fetch("/api/saved-results", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    markdown: markdown,
+                    title: title.trim(),
+                    collectionId: selectedCollectionId,
+                    url: url,
+                    userEmail: userEmail,
+                    type: "document",
+                }),
+            });
+
+            if (response.ok) {
+                onClose();
+            } else {
+                const errorData = await response.json();
+                error = errorData.error || "Failed to save document";
+            }
+        } catch (err) {
+            console.error("Error saving:", err);
+            error = "Failed to save document. Please try again.";
+        } finally {
+            isSaving = false;
         }
     }
 
@@ -66,68 +117,46 @@
         }
     }
 
-    function parseYamlFrontmatter(md: string): { metadata: Record<string, string>; content: string } {
-        if (!md.startsWith("---\n")) {
-            return { metadata: {}, content: md };
-        }
-
-        const endIndex = md.indexOf("\n---\n", 4);
-        if (endIndex === -1) {
-            return { metadata: {}, content: md };
-        }
-
-        const yamlStr = md.slice(4, endIndex);
-        const content = md.slice(endIndex + 5);
-
-        const metadata: Record<string, string> = {};
-        yamlStr.split("\n").forEach(line => {
-            const colonIndex = line.indexOf(":");
-            if (colonIndex > 0) {
-                const key = line.slice(0, colonIndex).trim();
-                const value = line.slice(colonIndex + 1).trim();
-                metadata[key] = value;
-            }
-        });
-
-        return { metadata, content };
+    function handleCopy() {
+        navigator.clipboard.writeText(markdown);
     }
 
-    function renderMarkdown(md: string): string {
-        const { metadata, content } = parseYamlFrontmatter(md);
-        
-        let html = content
-            .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-6 mb-2 text-zinc-900">$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-8 mb-3 text-zinc-900">$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-8 mb-4 text-zinc-900">$1</h1>')
-            .replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-zinc-300 pl-4 italic my-4 text-zinc-700">$1</blockquote>')
-            .replace(/\*\*(.*)\*\*/gim, '<strong class="font-semibold">$1</strong>')
-            .replace(/\*(.*)\*/gim, '<em class="italic">$1</em>')
-            .replace(/!\[(.*?)\]\((.*?)\)/gim, '<img src="$2" alt="$1" class="my-4 rounded-lg max-w-full" />')
-            .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
-            .replace(/`([^`]+)`/gim, '<code class="bg-zinc-100 text-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
-            .replace(/```([\s\S]*?)```/gim, '<pre class="bg-zinc-900 text-zinc-100 p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm font-mono">$1</code></pre>')
-            .replace(/^\- (.*$)/gim, '<li class="ml-6 list-disc text-zinc-700">$1</li>')
-            .replace(/^\d+\. (.*$)/gim, '<li class="ml-6 list-decimal text-zinc-700">$1</li>')
-            .replace(/\n\n/gim, '</p><p class="my-3 text-zinc-700 leading-relaxed">')
-            .replace(/\n/gim, '<br>');
-
-        if (Object.keys(metadata).length > 0) {
-            let metaHtml = '<div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4 mb-6">';
-            metaHtml += '<h4 class="text-xs font-semibold text-zinc-500 uppercase mb-2">Metadata</h4>';
-            metaHtml += '<div class="space-y-1">';
-            for (const [key, value] of Object.entries(metadata)) {
-                metaHtml += `<div class="flex gap-2"><span class="text-xs font-mono text-zinc-500">${key}:</span><span class="text-xs text-zinc-700">${value}</span></div>`;
-            }
-            metaHtml += '</div></div>';
-            html = metaHtml + html;
-        }
-
-        return `<div class="prose prose-zinc max-w-none"><p class="my-3 text-zinc-700 leading-relaxed">${html}</p></div>`;
+    function handleDownload() {
+        const blob = new Blob([markdown], { type: "text/markdown" });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `${title || "document"}.md`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
     }
 
     $effect(() => {
         if (open && url) {
             fetchMarkdown();
+            // Auto-select collection if there's one matching the domain
+            const domain = getDomain(url);
+            const matchingCollection = collections.find(
+                (c) =>
+                    c.topic.toLowerCase().includes(domain.toLowerCase()) ||
+                    domain.toLowerCase().includes(c.topic.toLowerCase()),
+            );
+            if (matchingCollection) {
+                selectedCollectionId = matchingCollection.id;
+            } else if (collections.length > 0) {
+                // Select first collection by default
+                selectedCollectionId = collections[0].id;
+            }
+        }
+    });
+
+    // Reset state when modal closes
+    $effect(() => {
+        if (!open) {
+            title = "";
+            markdown = "";
+            selectedCollectionId = null;
+            error = "";
         }
     });
 </script>
@@ -142,81 +171,190 @@
         tabindex="-1"
     >
         <div
-            class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col relative"
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col relative"
             onclick={(e) => e.stopPropagation()}
             role="document"
         >
-            <div class="sticky top-0 bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between z-10">
-                <div>
-                    <h2 class="text-lg font-semibold tracking-tight">Markdown Preview</h2>
-                    <p class="text-sm text-zinc-500 mt-0.5">{getDomain(url)}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button
-                        onclick={handleCopy}
-                        disabled={!markdown}
-                        class="px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                    >
-                        <Icon icon="mdi:content-copy" class="text-base" />
-                        Copy
-                    </button>
-                    <button
-                        onclick={handleDownload}
-                        disabled={!markdown}
-                        class="px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                    >
-                        <Icon icon="mdi:download" class="text-base" />
-                        Download
-                    </button>
-                    {#if onSave}
+            <!-- Header -->
+            <div class="sticky top-0 bg-white z-10">
+                <div
+                    class="border-b border-zinc-200 px-6 py-3 flex items-center justify-between"
+                >
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h2 class="text-lg font-semibold tracking-tight">
+                                Edit Document
+                            </h2>
+                            <p class="text-xs text-zinc-500 mt-0.5">
+                                {getDomain(url)}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <button
-                            onclick={handleSave}
-                            disabled={!markdown}
-                            class="px-3 py-1.5 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            onclick={handleCopy}
+                            disabled={!markdown || isLoading}
+                            class="px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                         >
-                            <Icon icon="mdi:content-save" class="text-base" />
-                            Save
+                            <Icon icon="mdi:content-copy" class="text-base" />
+                            Copy
                         </button>
-                    {/if}
-                    <button
-                        onclick={onClose}
-                        class="p-2 hover:bg-zinc-100 rounded-lg transition-colors ml-2"
-                        aria-label="Close"
-                    >
-                        <Icon icon="mdi:close" class="text-xl text-zinc-500" />
-                    </button>
+                        <button
+                            onclick={handleDownload}
+                            disabled={!markdown || isLoading}
+                            class="px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                        >
+                            <Icon icon="mdi:download" class="text-base" />
+                            Download
+                        </button>
+                        <button
+                            onclick={onClose}
+                            class="p-2 hover:bg-zinc-100 rounded-lg transition-colors ml-2"
+                            aria-label="Close"
+                        >
+                            <Icon
+                                icon="mdi:close"
+                                class="text-xl text-zinc-500"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto">
-                {#if isLoading}
-                    <div class="flex flex-col items-center justify-center py-16">
-                        <Icon icon="mdi:loading" class="text-4xl text-zinc-400 animate-spin mb-4" />
+            <!-- Main Content -->
+            {#if isLoading}
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center">
+                        <Icon
+                            icon="mdi:loading"
+                            class="text-4xl text-zinc-400 animate-spin mb-4"
+                        />
                         <p class="text-zinc-500">Fetching markdown...</p>
                     </div>
-                {:else if error}
-                    <div class="flex flex-col items-center justify-center py-16 px-6">
-                        <Icon icon="mdi:alert-circle" class="text-4xl text-red-400 mb-4" />
-                        <p class="text-zinc-700 font-medium mb-2">Failed to load markdown</p>
-                        <p class="text-sm text-zinc-500 text-center">{error}</p>
+                </div>
+            {:else if error && !markdown}
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center px-6">
+                        <Icon
+                            icon="mdi:alert-circle"
+                            class="text-4xl text-red-400 mb-4"
+                        />
+                        <p class="text-zinc-700 font-medium mb-2">
+                            Failed to load markdown
+                        </p>
+                        <p class="text-sm text-zinc-500 mb-4">{error}</p>
                         <button
                             onclick={fetchMarkdown}
-                            class="mt-4 px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors"
+                            class="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors"
                         >
                             Try Again
                         </button>
                     </div>
-                {:else if markdown}
-                    <div class="px-6 py-6">
-                        {@html renderMarkdown(markdown)}
+                </div>
+            {:else}
+                <div class="flex-1 overflow-y-auto flex flex-col">
+                    <!-- Title Input -->
+                    <div class="px-6 py-4 border-b border-zinc-200">
+                        <label
+                            class="text-xs text-zinc-500 font-medium mb-2 block"
+                            >Title</label
+                        >
+                        <input
+                            type="text"
+                            bind:value={title}
+                            placeholder="Document title..."
+                            class="w-full text-xl font-semibold tracking-tight border-none outline-none placeholder-zinc-300 text-zinc-800"
+                        />
                     </div>
-                {:else}
-                    <div class="flex flex-col items-center justify-center py-16">
-                        <Icon icon="mdi:file-document-outline" class="text-4xl text-zinc-300 mb-4" />
-                        <p class="text-zinc-500">No markdown content</p>
+
+                    <!-- Collection Selector -->
+                    <div class="px-6 py-3 border-b border-zinc-200">
+                        <label
+                            class="text-xs text-zinc-500 font-medium mb-2 block"
+                            >Collection</label
+                        >
+                        <div class="flex items-center gap-3">
+                            <select
+                                bind:value={selectedCollectionId}
+                                class="flex-1 px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                            >
+                                <option value={null}
+                                    >Select a collection...</option
+                                >
+                                {#each collections as collection (collection.id)}
+                                    <option value={collection.id}
+                                        >{collection.topic}</option
+                                    >
+                                {/each}
+                            </select>
+                            {#if selectedCollection}
+                                <span
+                                    class="text-[10px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full"
+                                >
+                                    {selectedCollection.topic}
+                                </span>
+                            {/if}
+                        </div>
                     </div>
-                {/if}
-            </div>
+
+                    <!-- Error Message -->
+                    {#if error}
+                        <div
+                            class="px-6 py-3 bg-red-50 border-b border-red-200"
+                        >
+                            <p class="text-sm text-red-700">{error}</p>
+                        </div>
+                    {/if}
+
+                    <!-- Editor -->
+                    <div class="flex-1 overflow-hidden px-6 py-4">
+                        <MarkdownEditor
+                            bind:value={markdown}
+                            placeholder="Start writing your document..."
+                        />
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div
+                    class="border-t border-zinc-200 px-6 py-3 bg-zinc-50 flex items-center justify-between"
+                >
+                    <div class="text-xs text-zinc-500">
+                        {markdown.trim()
+                            ? markdown.trim().split(/\s+/).length
+                            : 0} words • {markdown.length} characters
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            onclick={onClose}
+                            class="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onclick={handleSave}
+                            disabled={isSaving ||
+                                !title.trim() ||
+                                !selectedCollectionId}
+                            class="px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {#if isSaving}
+                                <Icon
+                                    icon="mdi:loading"
+                                    class="text-base animate-spin"
+                                />
+                                Saving...
+                            {:else}
+                                <Icon
+                                    icon="mdi:content-save"
+                                    class="text-base"
+                                />
+                                Save to Collection
+                            {/if}
+                        </button>
+                    </div>
+                </div>
+            {/if}
         </div>
     </div>
 {/if}
