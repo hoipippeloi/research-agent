@@ -1,4 +1,4 @@
-# Qwen3.5-4B LLM Gateway Dockerfile for Railway Deployment
+# Qwen3.5-2B LLM Gateway Dockerfile for Railway Deployment
 # CPU-only inference server with OpenAI-compatible API
 # Uses llama.cpp's built-in Hugging Face download feature
 
@@ -41,7 +41,7 @@ FROM ubuntu:24.04
 
 # Labels for identification
 LABEL maintainer="Research Agent Team"
-LABEL description="Qwen3.5-4B LLM Gateway with OpenAI-compatible API"
+LABEL description="Qwen3.5-2B LLM Gateway with OpenAI-compatible API"
 LABEL version="2.0.0"
 
 # Avoid interactive prompts
@@ -99,4 +99,4 @@ WORKDIR /app
 # - Sampling parameters from unsloth recommendations for thinking mode
 # - --chat-template-kwargs: Enable thinking mode (disabled by default in 4B)
 
-CMD ["sh", "-c", "llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --n-gpu-layers 0 --threads 4 --batch-size 512 --alias unsloth/Qwen3.5-4B-GGUF --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --chat-template-kwargs '{\"enable_thinking\":false}' --metrics"]
+CMD ["sh", "-c", "llama-server -hf unsloth/Qwen3.5-2B-GGUF:Q4_K_M --host 0.0.0.0 --port ${PORT:-8080} --ctx-size 262000 --n-gpu-layers 0 --threads 4 --batch-size 512 --alias unsloth/Qwen3.5-2B-GGUF --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 1.5 --chat-template-kwargs '{\"enable_thinking\":false}' --metrics"]

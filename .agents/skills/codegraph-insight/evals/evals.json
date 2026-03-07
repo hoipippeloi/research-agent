@@ -1,0 +1,23 @@
+{
+  "skill_name": "codegraph-insight",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Generate a codegraph analysis for this research-agent project",
+      "expected_output": "A timestamped CODEGRAPH-{timestamp}.md file in the project root with comprehensive analysis including dependency graphs, architecture insights, and recommendations",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Create a codegraph report for the frontend directory focusing on Svelte components and TypeScript architecture",
+      "expected_output": "A markdown file with svelte component analysis, TypeScript architecture overview, and recommendations specific to the frontend",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "analyze authentication flow and database connections in the codebase and show what would break if we refactor the auth system",
+      "expected_output": "A markdown file with detailed authentication flow analysis, database layer overview, and impact analysis for auth-related changes",
+      "files": []
+    }
+  ]
+}

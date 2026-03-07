@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ url }) => {
 /**
  * POST /api/bookmarks
  * Create a new bookmark (saved_result with type='url')
- * Body: { userEmail, title, url, excerpt, content?, collectionId? }
+ * Body: { userEmail, title, url, excerpt, content?, collectionId?, searchId? }
  */
 export const POST: RequestHandler = async ({ request }) => {
   const db = getDb();
@@ -53,7 +53,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
   try {
     const body = await request.json();
-    const { userEmail, title, url, excerpt, content, collectionId } = body;
+    const { userEmail, title, url, excerpt, content, collectionId, searchId } =
+      body;
 
     if (!userEmail || !title || !url) {
       return json(
@@ -86,6 +87,7 @@ export const POST: RequestHandler = async ({ request }) => {
           excerpt: excerpt || null,
           content: content || null,
           collectionId: collectionId || null,
+          searchId: searchId || null,
           updatedAt: now,
         })
         .where(eq(savedResults.id, existingBookmark[0].id))
@@ -104,6 +106,7 @@ export const POST: RequestHandler = async ({ request }) => {
         excerpt: excerpt || null,
         content: content || null,
         collectionId: collectionId || null,
+        searchId: searchId || null,
         type: "url",
         createdAt: now,
         updatedAt: now,
@@ -114,6 +117,61 @@ export const POST: RequestHandler = async ({ request }) => {
   } catch (error) {
     console.error("Error saving bookmark:", error);
     return json({ error: "Failed to save bookmark" }, { status: 500 });
+  }
+};
+
+/**
+ * PATCH /api/bookmarks
+ * Update bookmark collection assignment
+ * Body: { bookmarkId: number, collectionId: number | null, userEmail: string }
+ */
+export const PATCH: RequestHandler = async ({ request }) => {
+  const db = getDb();
+
+  if (!db) {
+    return json({ error: "Database not available" }, { status: 503 });
+  }
+
+  try {
+    const body = await request.json();
+    const { bookmarkId, collectionId, userEmail } = body;
+
+    if (!bookmarkId || !userEmail) {
+      return json(
+        { error: "Missing required fields: bookmarkId, userEmail" },
+        { status: 400 },
+      );
+    }
+
+    const numericId = parseInt(bookmarkId, 10);
+    if (isNaN(numericId)) {
+      return json({ error: "Invalid bookmark ID" }, { status: 400 });
+    }
+
+    // Update the bookmark's collection assignment
+    const result = await db
+      .update(savedResults)
+      .set({
+        collectionId: collectionId || null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(savedResults.id, numericId),
+          eq(savedResults.userEmail, userEmail),
+          eq(savedResults.type, "url"),
+        ),
+      )
+      .returning();
+
+    if (result.length === 0) {
+      return json({ error: "Bookmark not found" }, { status: 404 });
+    }
+
+    return json({ success: true, bookmark: result[0] });
+  } catch (error) {
+    console.error("Error updating bookmark collection:", error);
+    return json({ error: "Failed to update bookmark" }, { status: 500 });
   }
 };
 

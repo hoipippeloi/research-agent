@@ -1,7 +1,8 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { env } from '$env/dynamic/private';
-import * as schema from './schema';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { env } from "$env/dynamic/private";
+import * as schema from "./schema";
+import { searches } from "./schema";
 
 /**
  * Get the database connection URL from environment variables
@@ -24,8 +25,8 @@ let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 export function getDb() {
   if (!DATABASE_URL) {
     throw new Error(
-      'DATABASE_URL or POSTGRES_URL environment variable is not set. ' +
-      'Please add it to your .env file or environment.'
+      "DATABASE_URL or POSTGRES_URL environment variable is not set. " +
+        "Please add it to your .env file or environment.",
     );
   }
 
@@ -51,8 +52,8 @@ export function getDb() {
 export function getRawClient() {
   if (!DATABASE_URL) {
     throw new Error(
-      'DATABASE_URL or POSTGRES_URL environment variable is not set. ' +
-      'Please add it to your .env file or environment.'
+      "DATABASE_URL or POSTGRES_URL environment variable is not set. " +
+        "Please add it to your .env file or environment.",
     );
   }
 
@@ -82,8 +83,39 @@ export function isDatabaseConfigured(): boolean {
   return !!DATABASE_URL;
 }
 
+/**
+ * Save search to PostgreSQL and return the database ID
+ */
+export async function saveSearchToDb(search: {
+  userEmail: string;
+  query: string;
+  engine: string;
+  resultsCount: number;
+}): Promise<number | null> {
+  try {
+    const db = getDb();
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+    const [savedSearch] = await db
+      .insert(searches)
+      .values({
+        userEmail: search.userEmail,
+        query: search.query,
+        engine: search.engine,
+        resultsCount: search.resultsCount,
+      })
+      .returning({ id: searches.id });
+
+    return savedSearch.id;
+  } catch (error) {
+    console.error("Error saving search to database:", error);
+    return null;
+  }
+}
+
 // Export schema types and tables for convenience
-export * from './schema';
+export * from "./schema";
 
 // Export a default db instance getter
 export default getDb;

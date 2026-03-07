@@ -1,0 +1,43 @@
+{
+  "nodes": {
+    "total": 0,
+    "byKind": {}
+  },
+  "edges": {
+    "total": 0,
+    "byKind": {}
+  },
+  "files": {
+    "total": 0,
+    "languages": 0,
+    "byLanguage": {}
+  },
+  "cycles": {
+    "fileLevel": 0,
+    "functionLevel": 0
+  },
+  "hotspots": [],
+  "embeddings": null,
+  "quality": {
+    "score": 20,
+    "callerCoverage": {
+      "ratio": 0,
+      "covered": 0,
+      "total": 0
+    },
+    "callConfidence": {
+      "ratio": 0,
+      "highConf": 0,
+      "total": 0
+    },
+    "falsePositiveWarnings": []
+  },
+  "roles": {},
+  "complexity": null,
+  "communities": {
+    "communityCount": 0,
+    "modularity": 0,
+    "nodeCount": 0,
+    "driftScore": 0
+  }
+}

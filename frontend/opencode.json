@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "zai-coding-plan/glm-5",
+  "autoupdate": true,
+  "plugin": ["ecc-universal"],
+  "instructions": ["openmemory.md"],
+  "mcp": {
+    "time-server": {
+      "type": "remote",
+      "url": "https://mcp.time.mcpcentral.io"
+    },
+    "openmemory": {
+      "type": "remote",
+      "url": "https://openmemory-production-f483.up.railway.app/mcp"
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    },
+    "docfork": {
+      "type": "remote",
+      "url": "https://mcp.docfork.com/mcp",
+      "headers": {
+        "DOCFORK_CABINET": "general",
+        "DOCFORK_API_KEY": "docf_2RruLEHg5z6DCERsGzMhvFDxvKi9WK1gBMya96przQkS2pd22skXPGz"
+      }
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
+    }
+  },
+  "permission": {
+    "skill": {
+      "*": "allow"
+    }
+  }
+}

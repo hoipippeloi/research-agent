@@ -4,7 +4,7 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
     import Icon from "@iconify/svelte";
-    import type { SearchHistory } from "$lib/redis-client";
+
     import type { Collection, SavedResult } from "$lib/db/schema";
     import BirdsFlocking from "$lib/components/BirdsFlocking.svelte";
     import { uiScale } from "$lib/stores/uiScale";
@@ -19,7 +19,17 @@
     } from "$lib/modal-url";
     import MarkdownPreviewModal from "$lib/components/MarkdownPreviewModal.svelte";
     import EmailModal from "$lib/components/EmailModal.svelte";
+    import SearchSuggest from "$lib/components/SearchSuggest.svelte";
     import { toast } from "svelte-sonner";
+
+    interface SearchHistory {
+        id: string;
+        userEmail: string;
+        query: string;
+        timestamp: number;
+        engine: string;
+        resultsCount: number;
+    }
 
     interface AggregatedSearchHistory {
         query: string;
@@ -28,6 +38,7 @@
         engines: string[];
         totalResults: number;
         searches: SearchHistory[];
+        searchId: number | null;
     }
 
     type TabType = "searches" | "collections" | "docs" | "bookmarks";
@@ -61,6 +72,9 @@
     let showCreateCollectionModal = $state(false);
     let newCollectionName = $state("");
     let isCreatingNewCollection = $state(false);
+    let selectedSearchForCollection = $state<any | null>(null);
+
+    let createFromSearch = $state(false);
 
     let notes = $state<any[]>([]);
     let isLoadingNotes = $state(false);
@@ -79,19 +93,12 @@
     let newBookmarkExcerpt = $state("");
     let newBookmarkCollectionId = $state<number | null>(null);
     let collectionSearchQuery = $state("");
-    let showCollectionDropdown = $state(false);
+
     let showExcerptField = $state(false);
     let isAddingBookmark = $state(false);
-
-    let filteredCollections = $derived(
-        collectionSearchQuery.trim()
-            ? collections.filter((c) =>
-                  c.topic
-                      .toLowerCase()
-                      .includes(collectionSearchQuery.toLowerCase()),
-              )
-            : collections,
-    );
+    let showBookmarkCollectionModal = $state(false);
+    let selectedBookmarkForCollection = $state<any | null>(null);
+    let isAssigningBookmarkToCollection = $state(false);
 
     let currentModal = $state<{
         type: ModalType;
@@ -100,6 +107,7 @@
     }>({ type: null });
     let loadedResultsQuery = $state<string | null>(null);
     let isFetchingResults = $state(false);
+    let currentSearchId = $state<number | null>(null);
     let selectedSearchForModal = $derived(
         currentModal.query && aggregatedHistory.length > 0
             ? aggregatedHistory.find((s) => s.query === currentModal.query) ||
@@ -360,6 +368,7 @@
             if (response.ok) {
                 const data = await response.json();
                 searchResults = data;
+                currentSearchId = data.searchId || search.searchId || null;
                 loadedResultsQuery = search.query;
                 isFromCache = data.cached || false;
                 cachedAt = data.cachedAt || null;
@@ -454,21 +463,34 @@
 
         try {
             isCreatingNewCollection = true;
+
+            const requestBody: any = {
+                topic: newCollectionName.trim(),
+                userEmail: currentUserEmail,
+            };
+
+            // If creating from a search, include search metadata
+            if (createFromSearch && selectedSearchForCollection) {
+                requestBody.searchMetadata = {
+                    engine: selectedSearchForCollection.engines?.[0] || "brave",
+                    resultsCount: selectedSearchForCollection.totalResults || 0,
+                };
+            }
+
             const response = await fetch("/api/collections", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    topic: newCollectionName.trim(),
-                    userEmail: currentUserEmail,
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             if (response.ok) {
                 await loadCollections();
                 showCreateCollectionModal = false;
                 newCollectionName = "";
+                selectedSearchForCollection = null;
+                createFromSearch = false;
                 toast.success("Collection created", {
                     description: `Collection "${newCollectionName.trim()}" created successfully`,
                 });
@@ -489,6 +511,13 @@
         }
     }
 
+    function resetCollectionModal() {
+        showCreateCollectionModal = false;
+        newCollectionName = "";
+        selectedSearchForCollection = null;
+        createFromSearch = false;
+    }
+
     async function handleAddBookmarkFromModal() {
         if (!currentUserEmail || !newBookmarkUrl.trim()) return;
 
@@ -504,6 +533,7 @@
                     url: newBookmarkUrl.trim(),
                     excerpt: newBookmarkExcerpt.trim() || "",
                     collectionId: newBookmarkCollectionId,
+                    searchId: currentSearchId,
                     userEmail: currentUserEmail,
                 }),
             });
@@ -533,6 +563,55 @@
             });
         } finally {
             isAddingBookmark = false;
+        }
+    }
+
+    async function handleAssignBookmarkToCollection(
+        collectionId: number | null,
+    ) {
+        if (!currentUserEmail || !selectedBookmarkForCollection) return;
+
+        try {
+            isAssigningBookmarkToCollection = true;
+            const response = await fetch("/api/bookmarks", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    bookmarkId: selectedBookmarkForCollection.id,
+                    collectionId: collectionId,
+                    userEmail: currentUserEmail,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const successMessage = collectionId
+                    ? "Bookmark added to collection"
+                    : "Bookmark removed from collection";
+                const successDescription = collectionId
+                    ? `Added "${selectedBookmarkForCollection.title}" to collection`
+                    : `Removed "${selectedBookmarkForCollection.title}" from collection`;
+
+                toast.success(successMessage, {
+                    description: successDescription,
+                });
+                await loadBookmarks();
+                showBookmarkCollectionModal = false;
+                selectedBookmarkForCollection = null;
+            } else {
+                const errorData = await response.json();
+                toast.error("Failed to add bookmark to collection", {
+                    description: errorData.error || "An error occurred",
+                });
+            }
+        } catch (error) {
+            toast.error("Failed to add bookmark to collection", {
+                description: "An unexpected error occurred",
+            });
+        } finally {
+            isAssigningBookmarkToCollection = false;
         }
     }
 
@@ -826,10 +905,15 @@
 
             if (existing) {
                 existing.count++;
+                const isNewer = search.timestamp > existing.latestTimestamp;
                 existing.latestTimestamp = Math.max(
                     existing.latestTimestamp,
                     search.timestamp,
                 );
+                // Update searchId to the latest search
+                if (isNewer) {
+                    existing.searchId = parseInt(search.id) || null;
+                }
                 if (!existing.engines.includes(search.engine)) {
                     existing.engines.push(search.engine);
                 }
@@ -842,6 +926,7 @@
                     engines: [search.engine],
                     totalResults: search.resultsCount,
                     searches: [search],
+                    searchId: parseInt(search.id) || null,
                 });
             }
         }
@@ -909,6 +994,7 @@
                 console.log("Search results:", results);
 
                 searchResults = results;
+                currentSearchId = results.searchId || null;
                 isFromCache = results.cached || false;
                 cachedAt = results.cachedAt || null;
 
@@ -1125,6 +1211,11 @@
                     class="text-3xl md:text-4xl font-semibold tracking-tight mb-6 text-center"
                 >
                     Research, collect and share
+                    <span
+                        style="font-family: 'Caveat', cursive; font-weight: 600; font-size: 0.5em;"
+                    >
+                        with the web</span
+                    >
                 </h1>
 
                 <!-- Search Bar -->
@@ -1156,13 +1247,15 @@
                                     icon="mdi:loading"
                                     class="text-base animate-spin"
                                 />
-                                <span>Searching...</span>
+                                <span
+                                    style="font-family: 'Caveat', cursive; font-size: 1.4em; font-weight: 700;"
+                                    >Searching...</span
+                                >
                             {:else}
-                                <Icon
-                                    icon="mdi:arrow-right"
-                                    class="text-base"
-                                />
-                                <span>Search</span>
+                                <span
+                                    style="font-family: 'Caveat', cursive; font-size: 1.4em; font-weight: 700;"
+                                    >Search</span
+                                >
                             {/if}
                         </button>
                     </div>
@@ -1827,30 +1920,56 @@
                                         rel="noopener noreferrer"
                                         class="post-card bg-white rounded-xl p-4 border border-zinc-200/70 shadow-sm cursor-pointer hover:shadow-xl relative group flex flex-col min-h-[140px]"
                                     >
-                                        <!-- Delete Button -->
-                                        <button
-                                            onclick={(e) =>
-                                                handleDeleteBookmark(
-                                                    bookmark.id,
-                                                    e,
-                                                )}
-                                            disabled={deletingBookmarkId ===
-                                                bookmark.id}
-                                            class="absolute bottom-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 opacity-0 group-hover:opacity-100 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
-                                            title="Delete bookmark"
+                                        <!-- Action Buttons -->
+                                        <div
+                                            class="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                         >
-                                            {#if deletingBookmarkId === bookmark.id}
+                                            <!-- Add to Collection Button -->
+                                            <button
+                                                onclick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    selectedBookmarkForCollection =
+                                                        bookmark;
+                                                    showBookmarkCollectionModal = true;
+                                                }}
+                                                disabled={isAssigningBookmarkToCollection}
+                                                class="p-1.5 bg-white/80 hover:bg-blue-50 rounded-lg border border-zinc-200/50 transition-all hover:border-blue-200 hover:text-blue-600 disabled:opacity-50 z-10"
+                                                title={bookmark.collectionId
+                                                    ? `Manage collection (currently in: ${collections.find((c) => c.id === bookmark.collectionId)?.topic || "Unknown"})`
+                                                    : "Add to collection"}
+                                            >
                                                 <Icon
-                                                    icon="mdi:loading"
-                                                    class="text-xs animate-spin"
-                                                />
-                                            {:else}
-                                                <Icon
-                                                    icon="mdi:trash-can-outline"
+                                                    icon="mdi:folder-plus"
                                                     class="text-xs"
                                                 />
-                                            {/if}
-                                        </button>
+                                            </button>
+
+                                            <!-- Delete Button -->
+                                            <button
+                                                onclick={(e) =>
+                                                    handleDeleteBookmark(
+                                                        bookmark.id,
+                                                        e,
+                                                    )}
+                                                disabled={deletingBookmarkId ===
+                                                    bookmark.id}
+                                                class="p-1.5 bg-white/80 hover:bg-red-50 rounded-lg border border-zinc-200/50 transition-all hover:border-red-200 hover:text-red-600 disabled:opacity-50 z-10"
+                                                title="Delete bookmark"
+                                            >
+                                                {#if deletingBookmarkId === bookmark.id}
+                                                    <Icon
+                                                        icon="mdi:loading"
+                                                        class="text-xs animate-spin"
+                                                    />
+                                                {:else}
+                                                    <Icon
+                                                        icon="mdi:trash-can-outline"
+                                                        class="text-xs"
+                                                    />
+                                                {/if}
+                                            </button>
+                                        </div>
 
                                         <div
                                             class="flex items-center justify-between mb-3"
@@ -1865,11 +1984,34 @@
                                             <div
                                                 class="flex items-center gap-1.5"
                                             >
-                                                <span
-                                                    class="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full"
-                                                >
-                                                    Bookmark
-                                                </span>
+                                                {#if bookmark.collectionId}
+                                                    {@const collection =
+                                                        collections.find(
+                                                            (c) =>
+                                                                c.id ===
+                                                                bookmark.collectionId,
+                                                        )}
+                                                    {#if collection}
+                                                        <span
+                                                            class="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full"
+                                                            title="In collection: {collection.topic}"
+                                                        >
+                                                            {collection.topic}
+                                                        </span>
+                                                    {:else}
+                                                        <span
+                                                            class="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full"
+                                                        >
+                                                            Bookmark
+                                                        </span>
+                                                    {/if}
+                                                {:else}
+                                                    <span
+                                                        class="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full"
+                                                    >
+                                                        Bookmark
+                                                    </span>
+                                                {/if}
                                             </div>
                                         </div>
                                         <div
@@ -2203,12 +2345,9 @@
         <div
             class="fixed inset-0 z-60 flex items-center justify-center px-4"
             onclick={() => {
-                showCreateCollectionModal = false;
-                newCollectionName = "";
+                resetCollectionModal();
             }}
-            onkeydown={(e) =>
-                e.key === "Escape" &&
-                ((showCreateCollectionModal = false), (newCollectionName = ""))}
+            onkeydown={(e) => e.key === "Escape" && resetCollectionModal()}
             role="dialog"
             aria-modal="true"
             tabindex="-1"
@@ -2226,8 +2365,7 @@
                         </h2>
                         <button
                             onclick={() => {
-                                showCreateCollectionModal = false;
-                                newCollectionName = "";
+                                resetCollectionModal();
                             }}
                             class="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
                             aria-label="Close"
@@ -2245,28 +2383,112 @@
                         }}
                     >
                         <div class="mb-4">
-                            <label
-                                for="collection-name"
-                                class="block text-sm font-medium text-zinc-700 mb-2"
+                            <SearchSuggest
+                                data={aggregatedHistory}
+                                displayField="query"
+                                searchFields={["query"]}
+                                selectedItem={selectedSearchForCollection}
+                                searchQuery={newCollectionName}
+                                label="Collection Name"
+                                placeholder="Type a collection name or search existing queries..."
+                                clearable={false}
+                                emptyMessage="No search history available"
+                                noResultsMessage="No matching searches found - your input will be used as collection name"
+                                onselect={(search) => {
+                                    selectedSearchForCollection = search;
+                                    newCollectionName = search.query;
+                                    createFromSearch = true;
+                                }}
+                                onclear={() => {
+                                    selectedSearchForCollection = null;
+                                    createFromSearch = false;
+                                }}
+                                onsearch={(query) => {
+                                    newCollectionName = query;
+                                    if (!query.trim()) {
+                                        selectedSearchForCollection = null;
+                                        createFromSearch = false;
+                                    }
+                                }}
                             >
-                                Collection Name
-                            </label>
-                            <input
-                                type="text"
-                                id="collection-name"
-                                bind:value={newCollectionName}
-                                placeholder="e.g., AI Research, Project Ideas..."
-                                class="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 outline-none transition-all"
-                                disabled={isCreatingNewCollection}
-                                autofocus
-                            />
+                                {#snippet itemRenderer(search, isSelected)}
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <div>
+                                            <div
+                                                class="font-medium {isSelected
+                                                    ? 'text-blue-700'
+                                                    : ''}"
+                                            >
+                                                {search.query}
+                                            </div>
+                                            <div class="text-xs text-zinc-400">
+                                                {search.count} search{search.count >
+                                                1
+                                                    ? "es"
+                                                    : ""} • {search.totalResults}
+                                                results
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <Icon
+                                                icon="mdi:history"
+                                                class="text-zinc-400 text-sm"
+                                            />
+                                            {#if isSelected}
+                                                <Icon
+                                                    icon="mdi:check"
+                                                    class="text-blue-600"
+                                                />
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/snippet}
+                            </SearchSuggest>
+
+                            {#if selectedSearchForCollection}
+                                <div
+                                    class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                                >
+                                    <div
+                                        class="flex items-center gap-2 text-sm text-blue-800"
+                                    >
+                                        <Icon
+                                            icon="mdi:information"
+                                            class="text-blue-600"
+                                        />
+                                        <span
+                                            >Creating collection from existing
+                                            search with {selectedSearchForCollection.totalResults}
+                                            results</span
+                                        >
+                                    </div>
+                                </div>
+                            {:else if newCollectionName.trim()}
+                                <div
+                                    class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg"
+                                >
+                                    <div
+                                        class="flex items-center gap-2 text-sm text-green-800"
+                                    >
+                                        <Icon
+                                            icon="mdi:plus-circle"
+                                            class="text-green-600"
+                                        />
+                                        <span
+                                            >Creating new collection: "{newCollectionName.trim()}"</span
+                                        >
+                                    </div>
+                                </div>
+                            {/if}
                         </div>
+
                         <div class="flex gap-3">
                             <button
                                 type="button"
                                 onclick={() => {
-                                    showCreateCollectionModal = false;
-                                    newCollectionName = "";
+                                    resetCollectionModal();
                                 }}
                                 class="flex-1 px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
                                 disabled={isCreatingNewCollection}
@@ -2436,112 +2658,58 @@
                         {/if}
                     </div>
                     <div class="mb-6">
-                        <label
-                            for="bookmark-collection"
-                            class="block text-sm font-medium text-zinc-700 mb-1"
+                        <SearchSuggest
+                            data={collections}
+                            displayField="topic"
+                            searchFields={["topic"]}
+                            selectedItem={collections.find(
+                                (c) => c.id === newBookmarkCollectionId,
+                            ) || null}
+                            searchQuery={collectionSearchQuery}
+                            label="Collection (optional)"
+                            placeholder="Search collections..."
+                            onselect={(collection) => {
+                                newBookmarkCollectionId = collection.id;
+                                collectionSearchQuery = "";
+                            }}
+                            onclear={() => {
+                                newBookmarkCollectionId = null;
+                                collectionSearchQuery = "";
+                            }}
+                            onsearch={(query) => {
+                                collectionSearchQuery = query;
+                            }}
                         >
-                            Collection (optional)
-                        </label>
-                        <div class="relative">
-                            <div class="relative">
-                                <Icon
-                                    icon="mdi:folder-outline"
-                                    class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-                                />
-                                <input
-                                    id="bookmark-collection"
-                                    type="text"
-                                    bind:value={collectionSearchQuery}
-                                    onfocus={() =>
-                                        (showCollectionDropdown = true)}
-                                    onblur={() =>
-                                        setTimeout(
-                                            () =>
-                                                (showCollectionDropdown = false),
-                                            200,
-                                        )}
-                                    placeholder={newBookmarkCollectionId
-                                        ? collections.find(
-                                              (c) =>
-                                                  c.id ===
-                                                  newBookmarkCollectionId,
-                                          )?.topic || "Select collection"
-                                        : "Search collections..."}
-                                    class="w-full pl-10 pr-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                {#if newBookmarkCollectionId}
-                                    <button
-                                        type="button"
-                                        onclick={() => {
-                                            newBookmarkCollectionId = null;
-                                            collectionSearchQuery = "";
-                                        }}
-                                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded"
+                            {#snippet itemRenderer(collection, isSelected)}
+                                <div class="flex items-center gap-2">
+                                    <Icon
+                                        icon="mdi:folder"
+                                        class="text-zinc-400 {isSelected
+                                            ? 'text-blue-500'
+                                            : ''}"
+                                    />
+                                    <span class="truncate font-medium">
+                                        {collection.topic}
+                                    </span>
+                                    <div
+                                        class="ml-auto flex items-center gap-1"
                                     >
-                                        <Icon
-                                            icon="mdi:close"
-                                            class="text-zinc-400 text-sm"
-                                        />
-                                    </button>
-                                {/if}
-                            </div>
-                            {#if showCollectionDropdown && filteredCollections.length > 0}
-                                <div
-                                    class="absolute z-10 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-                                >
-                                    {#each filteredCollections as collection (collection.id)}
-                                        <button
-                                            type="button"
-                                            onclick={() => {
-                                                newBookmarkCollectionId =
-                                                    collection.id;
-                                                collectionSearchQuery = "";
-                                                showCollectionDropdown = false;
-                                            }}
-                                            class="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 flex items-center gap-2 {newBookmarkCollectionId ===
-                                            collection.id
-                                                ? 'bg-blue-50 text-blue-700'
-                                                : ''}"
-                                        >
+                                        <span class="text-xs text-zinc-400">
+                                            {collection.searchCount || 0} search{(collection.searchCount ||
+                                                0) === 1
+                                                ? ""
+                                                : "es"}
+                                        </span>
+                                        {#if isSelected}
                                             <Icon
-                                                icon="mdi:folder"
-                                                class="text-zinc-400 {newBookmarkCollectionId ===
-                                                collection.id
-                                                    ? 'text-blue-500'
-                                                    : ''}"
+                                                icon="mdi:check"
+                                                class="text-blue-600"
                                             />
-                                            <span class="truncate"
-                                                >{collection.topic}</span
-                                            >
-                                            {#if newBookmarkCollectionId === collection.id}
-                                                <Icon
-                                                    icon="mdi:check"
-                                                    class="ml-auto text-blue-600"
-                                                />
-                                            {/if}
-                                        </button>
-                                    {/each}
+                                        {/if}
+                                    </div>
                                 </div>
-                            {:else if showCollectionDropdown && collectionSearchQuery && filteredCollections.length === 0}
-                                <div
-                                    class="absolute z-10 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg p-3 text-sm text-zinc-500"
-                                >
-                                    No collections found
-                                </div>
-                            {/if}
-                        </div>
-                        {#if newBookmarkCollectionId}
-                            <div
-                                class="mt-2 flex items-center gap-1 text-xs text-blue-600"
-                            >
-                                <Icon icon="mdi:folder" class="text-sm" />
-                                <span
-                                    >Will be saved to: {collections.find(
-                                        (c) => c.id === newBookmarkCollectionId,
-                                    )?.topic}</span
-                                >
-                            </div>
-                        {/if}
+                            {/snippet}
+                        </SearchSuggest>
                     </div>
                     <div class="flex gap-3">
                         <button
@@ -2579,7 +2747,222 @@
     </div>
 {/if}
 
+<!-- Bookmark Collection Assignment Modal -->
+{#if showBookmarkCollectionModal && selectedBookmarkForCollection}
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
+    <div
+        class="fixed inset-0 z-60 flex items-center justify-center px-4"
+        onclick={() => {
+            showBookmarkCollectionModal = false;
+            selectedBookmarkForCollection = null;
+        }}
+        onkeydown={(e) =>
+            e.key === "Escape" &&
+            ((showBookmarkCollectionModal = false),
+            (selectedBookmarkForCollection = null))}
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+    >
+        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div
+            class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            onclick={(e) => e.stopPropagation()}
+            role="document"
+        >
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold tracking-tight">
+                        Add to Collection
+                    </h2>
+                    <button
+                        onclick={() => {
+                            showBookmarkCollectionModal = false;
+                            selectedBookmarkForCollection = null;
+                        }}
+                        class="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                        aria-label="Close"
+                    >
+                        <Icon icon="mdi:close" class="text-xl text-zinc-500" />
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-sm text-zinc-600 mb-3">
+                        Add "{selectedBookmarkForCollection.title ||
+                            "this bookmark"}" to a collection:
+                    </p>
+                    {#if selectedBookmarkForCollection.collectionId}
+                        {@const currentCollection = collections.find(
+                            (c) =>
+                                c.id ===
+                                selectedBookmarkForCollection.collectionId,
+                        )}
+                        {#if currentCollection}
+                            <div
+                                class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <Icon
+                                        icon="mdi:folder"
+                                        class="text-blue-600 text-sm"
+                                    />
+                                    <span
+                                        class="text-sm text-blue-800 font-medium"
+                                    >
+                                        Currently in: {currentCollection.topic}
+                                    </span>
+                                </div>
+                            </div>
+                        {/if}
+                    {:else}
+                        <div
+                            class="bg-zinc-50 border border-zinc-200 rounded-lg p-3 mb-4"
+                        >
+                            <div class="flex items-center gap-2">
+                                <Icon
+                                    icon="mdi:folder-outline"
+                                    class="text-zinc-500 text-sm"
+                                />
+                                <span class="text-sm text-zinc-600">
+                                    Not assigned to any collection
+                                </span>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+
+                {#if isLoadingCollections}
+                    <div class="flex items-center justify-center py-8">
+                        <Icon
+                            icon="mdi:loading"
+                            class="text-2xl text-zinc-400 animate-spin"
+                        />
+                    </div>
+                {:else if collections.length === 0}
+                    <div class="text-center py-8">
+                        <Icon
+                            icon="mdi:folder-outline"
+                            class="text-4xl text-zinc-300 mb-4 mx-auto"
+                        />
+                        <p class="text-zinc-500 text-sm">
+                            No collections available. Create one first.
+                        </p>
+                    </div>
+                {:else}
+                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                        {#if selectedBookmarkForCollection.collectionId}
+                            <!-- Remove from collection option -->
+                            <button
+                                onclick={() =>
+                                    handleAssignBookmarkToCollection(null)}
+                                disabled={isAssigningBookmarkToCollection}
+                                class="w-full p-3 text-left rounded-xl border border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 mb-3"
+                            >
+                                <div
+                                    class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center shrink-0"
+                                >
+                                    <Icon
+                                        icon="mdi:folder-remove"
+                                        class="text-red-600 text-lg"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div
+                                        class="font-medium text-sm text-red-800"
+                                    >
+                                        Remove from collection
+                                    </div>
+                                    <div class="text-xs text-red-600">
+                                        Remove bookmark from current collection
+                                    </div>
+                                </div>
+                                {#if isAssigningBookmarkToCollection}
+                                    <Icon
+                                        icon="mdi:loading"
+                                        class="text-red-400 animate-spin"
+                                    />
+                                {:else}
+                                    <Icon
+                                        icon="mdi:chevron-right"
+                                        class="text-red-400"
+                                    />
+                                {/if}
+                            </button>
+                        {/if}
+                        {#each collections as collection (collection.id)}
+                            <button
+                                onclick={() =>
+                                    handleAssignBookmarkToCollection(
+                                        collection.id,
+                                    )}
+                                disabled={isAssigningBookmarkToCollection}
+                                class="w-full p-3 text-left rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 {selectedBookmarkForCollection.collectionId ===
+                                collection.id
+                                    ? 'bg-blue-50 border-blue-200'
+                                    : ''}"
+                            >
+                                <div
+                                    class="w-10 h-10 bg-zinc-100 rounded-lg flex items-center justify-center shrink-0"
+                                >
+                                    <Icon
+                                        icon="mdi:folder"
+                                        class="text-zinc-600 text-lg"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-sm truncate">
+                                        {collection.topic}
+                                    </div>
+                                    <div class="text-xs text-zinc-400">
+                                        {collection.searchCount || 0} search{(collection.searchCount ||
+                                            0) === 1
+                                            ? ""
+                                            : "es"}
+                                        {#if selectedBookmarkForCollection.collectionId === collection.id}
+                                            <span class="text-blue-600">
+                                                · Current</span
+                                            >
+                                        {/if}
+                                    </div>
+                                </div>
+                                {#if isAssigningBookmarkToCollection}
+                                    <Icon
+                                        icon="mdi:loading"
+                                        class="text-zinc-400 animate-spin"
+                                    />
+                                {:else}
+                                    <Icon
+                                        icon="mdi:chevron-right"
+                                        class="text-zinc-400"
+                                    />
+                                {/if}
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+
+                <div class="mt-6">
+                    <button
+                        type="button"
+                        onclick={() => {
+                            showBookmarkCollectionModal = false;
+                            selectedBookmarkForCollection = null;
+                        }}
+                        disabled={isAssigningBookmarkToCollection}
+                        class="w-full px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
+    @import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Flex:opsz,wght,XOPQ,XTRA,YOPQ,YTDE,YTFI,YTLC,YTUC@8..144,100..1000,96,468,79,-203,738,514,712&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
     .ui-scaled,
     .ui-scaled-header,
     .ui-scaled-footer {

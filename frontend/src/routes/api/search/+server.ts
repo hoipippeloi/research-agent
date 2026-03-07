@@ -7,6 +7,7 @@ import {
   getCachedSearchResults,
   deduplicateResults,
 } from "$lib/redis-client";
+import { saveSearchToDb } from "$lib/db";
 
 export const GET: RequestHandler = async ({ url }) => {
   try {
@@ -70,8 +71,16 @@ export const GET: RequestHandler = async ({ url }) => {
     // Cache the results
     await cacheSearchResults(query, engine, dedupedResults);
 
-    // Save to search history
+    // Save to search history (Redis)
     await saveSearch({
+      userEmail,
+      query,
+      engine: engines.join(","),
+      resultsCount: dedupedResults.length,
+    });
+
+    // Save to PostgreSQL and get database ID
+    const searchId = await saveSearchToDb({
       userEmail,
       query,
       engine: engines.join(","),
@@ -83,6 +92,7 @@ export const GET: RequestHandler = async ({ url }) => {
       number_of_results: dedupedResults.length,
       results: dedupedResults,
       cached: false,
+      searchId: searchId,
     });
   } catch (error) {
     console.error("Search error:", error);
@@ -107,9 +117,17 @@ export const POST: RequestHandler = async ({ request }) => {
     if (cached) {
       console.log(`Cache hit for query: "${query}" (${engine})`);
 
-      // Still save to search history
+      // Still save to search history (Redis)
       const engines = getEnginesForType(engine);
       await saveSearch({
+        userEmail,
+        query,
+        engine: engines.join(","),
+        resultsCount: cached.count,
+      });
+
+      // Save to PostgreSQL and get database ID
+      const searchId = await saveSearchToDb({
         userEmail,
         query,
         engine: engines.join(","),
@@ -122,6 +140,7 @@ export const POST: RequestHandler = async ({ request }) => {
         results: cached.results,
         cached: true,
         cachedAt: cached.timestamp,
+        searchId: searchId,
       });
     }
 
@@ -151,8 +170,16 @@ export const POST: RequestHandler = async ({ request }) => {
     // Cache the results
     await cacheSearchResults(query, engine, dedupedResults);
 
-    // Save to search history
+    // Save to search history (Redis)
     await saveSearch({
+      userEmail,
+      query,
+      engine: engines.join(","),
+      resultsCount: dedupedResults.length,
+    });
+
+    // Save to PostgreSQL and get database ID
+    const searchId = await saveSearchToDb({
       userEmail,
       query,
       engine: engines.join(","),
@@ -164,6 +191,7 @@ export const POST: RequestHandler = async ({ request }) => {
       number_of_results: dedupedResults.length,
       results: dedupedResults,
       cached: false,
+      searchId: searchId,
     });
   } catch (error) {
     console.error("Search error:", error);

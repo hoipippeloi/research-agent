@@ -34,6 +34,8 @@
   },
   "dependencies": {
     "@iconify/svelte": "^5.2.1",
+    "@page-agent/llms": "^1.5.1",
+    "@page-agent/ui": "^1.5.1",
     "@sveltejs/adapter-node": "^5.5.4",
     "@types/three": "^0.183.1",
     "axios": "^1.13.6",
@@ -43,6 +45,7 @@
     "drizzle-orm": "^0.38.3",
     "ioredis": "^5.10.0",
     "isomorphic-dompurify": "^3.0.0",
+    "page-agent": "^1.5.1",
     "postgres": "^3.4.5",
     "svelte-sonner": "^1.0.8",
     "three": "^0.183.2"

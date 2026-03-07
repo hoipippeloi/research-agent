@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "f155b6ad89533b760c73c919b3e875e23d20c20771062b73b08f7ae1e4fe9a79"
     },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "9b03bb78ec5c81c4e0546dbb78cfc970368c72dcae5482e8c59690175abbc8e7"
+    },
     "svelte5-best-practices": {
       "source": "ejirocodes/agent-skills",
       "sourceType": "github",
